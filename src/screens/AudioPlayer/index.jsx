@@ -4,7 +4,7 @@ import MediaPlayer from '../../components/MediaPlayer/MediaPlayer'
 const ProfileScreen = (navigation) => {
   return (
     <View style={styles.container}>
-      <Text>Profile Changes</Text>
+        <MediaPlayer filePath={navigation.route.params.data.path}/>
     </View>
   )
 }

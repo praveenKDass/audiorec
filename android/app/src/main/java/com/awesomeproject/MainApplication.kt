@@ -20,6 +20,8 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
+                add(DNDManagerPackage()) // Add your custom DNDManager package
+
             }
 
         override fun getJSMainModuleName(): String = "index"

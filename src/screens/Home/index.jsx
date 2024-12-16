@@ -1,88 +1,199 @@
-import { StyleSheet, Text, View ,Button,Animated,AppState, Alert,PermissionsAndroid} from 'react-native'
-import React, { useState,useEffect, useRef } from 'react'
+import React, {useState, useRef, useEffect} from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  FlatList,
+  Animated,
+  Alert,
+  PermissionsAndroid,
+  Platform,
+  Linking,
+  AppState ,
+  NativeModules
+} from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // For local storage
-
-const HomeScreen = () => {
-  // const [audioRecorderPlayer] = useState(new AudioRecorderPlayer());
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import 'react-native-get-random-values';
+import {v4 as uuidv4} from 'uuid';
+import RNFS from 'react-native-fs';
+import { request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { checkDNDPermission,setDNDMode} from '../../components/checkDNDPermission/checkDNDPermission';
+const HomeScreen = ({navigation}) => {
   const [audioRecorderPlayer] = useState(new AudioRecorderPlayer());
   const [recordingPath, setRecordingPath] = useState('');
-  const [playTime, setPlayTime] = useState('');
-  const [duration, setDuration] = useState('')
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  const [recordings, setRecordings] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentDuration, setCurrentDuration] = useState(0);
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const durationInterval = useRef(null);
+
+  const [wasDndEnabled, setWasDndEnabled] = useState(false);
+
   const [appState, setAppState] = useState(AppState.currentState);
 
-   // Request microphone permissions
-  const requestMicrophonePermission = async () => {
-    try {
-      const permission = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        {
-          title: 'Microphone Permission',
-          message: 'This app needs access to your microphone to record audio.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
+  useEffect(() => {
+    // Check and request DND permission when the app starts
+    if (Platform.OS === 'android') {
+      checkDNDPermission();
+    }
+
+    // Initial check for DND mode on app startup
+    if (appState === 'active') {
+      setDNDMode('PRIORITY_MODE'); 
+    }
+
+
+    // Listen for app state changes
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove(); // Clean up listener
+    };
+  }, [appState]);
+
+
+  const handleAppStateChange = (nextAppState) => {
+    if (nextAppState === 'active') {        
+        setDNDMode('PRIORITY_MODE'); // Enable DND mode
+    } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        
+        setDNDMode('NORMAL_MODE'); // Disable DND mode
+    }
+    setAppState(nextAppState);
+};
+
+
+//above line for dnd mode
+  // Request microphone permissions
+  const requestPermission = async () => {
+   
+      if (Platform.OS === 'android') {
+        try {
+          const recordAudioPermission = PERMISSIONS.ANDROID.RECORD_AUDIO;
+          let fineLocation = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
+
+          // Request each permission individually
+          const fineLocationStaus = await request(fineLocation);
+          const recordAudioPermissionStatus = await request(recordAudioPermission);
+          if (
+            recordAudioPermissionStatus ===RESULTS.GRANTED &&
+            fineLocationStaus ===RESULTS.GRANTED 
+          ) {
+            return true;
+          } else {
+            Alert.alert(
+              'Permissions Required',
+              'Please grant the required permissions to use this feature.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => console.log('Permission denied'),
+                },
+                {
+                  text: 'Go to Settings',
+                  onPress: () => Linking.openSettings(),
+                  style: 'cancel',
+                },
+              ]
+            );          }
+        } catch (err) {
+          console.warn(err);
+          return;
         }
-      );
-      return permission === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    
+  }
+
+  // Save recordings to local storage
+  const saveRecordingsToStorage = async recordings => {
+    try {
+      const jsonValue = JSON.stringify(recordings);
+      await AsyncStorage.setItem('shikshachaupalrecording', jsonValue);
     } catch (error) {
-      console.error('Permission request failed:', error);
-      return false;
+      console.error('Failed to save recordings:', error);
     }
   };
 
- 
+  // Load recordings from local storage
+  const loadRecordingsFromStorage = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('shikshachaupalrecording');
+      return jsonValue != null ? JSON.parse(jsonValue) : [];
+    } catch (error) {
+      console.error('Failed to load recordings:', error);
+      return [];
+    }
+  };
+
+  // Use `useEffect` to load recordings on component mount
+  useEffect(() => {
+    const initializeRecordings = async () => {
+      const storedRecordings = await loadRecordingsFromStorage();
+      setRecordings(storedRecordings);
+    };
+    initializeRecordings();
+  }, []);
 
 
   // Start recording
   const startRecording = async () => {
+    const granted = await requestPermission();
+    if (!granted) {
+      Alert.alert('Microphone permission not granted');
+      return;
+    }
+
     try {
-      const granted = await requestMicrophonePermission();
-      if (!granted) {
-        console.error('Microphone permission not granted');
-        return;
-      }
+      const uniqueFileName = `recording_${Date.now()}_${uuidv4()}.mp3`;
+      const recordingPath = Platform.select({
+        ios: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
+        android: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
+      });
+      const result = await audioRecorderPlayer.startRecorder(recordingPath);
+      setRecordingPath(result);
       setIsRecording(true);
-      animatedValue.setValue(0);
+      setIsPaused(false);
+      setCurrentDuration(0);
+      durationInterval.current = setInterval(() => {
+        setCurrentDuration(prev => prev + 1);
+      }, 1000);
 
-      const result = await audioRecorderPlayer.startRecorder();
-      console.log('Recording started:', result);
-
-      // Store file path in AsyncStorage
-      await AsyncStorage.setItem('recordingPath', result);
-
-      audioRecorderPlayer.addRecordBackListener((e) => {
+      audioRecorderPlayer.addRecordBackListener(e => {
         const amplitude = e.currentMetering || 0;
-        const normalizedAmplitude = Math.max(0, Math.min(amplitude + 160, 160)) / 160;
-
+        const normalizedAmplitude =
+          Math.max(0, Math.min(amplitude + 160, 160)) / 160;
         Animated.spring(animatedValue, {
           toValue: normalizedAmplitude,
           useNativeDriver: true,
           speed: 20,
         }).start();
-
-        return;
       });
     } catch (error) {
       console.error('Failed to start recording:', error);
     }
   };
 
-  // Stop recording and store the path in local storage
+  // Stop recording
   const stopRecording = async () => {
     try {
       const result = await audioRecorderPlayer.stopRecorder();
+      clearInterval(durationInterval.current);
       audioRecorderPlayer.removeRecordBackListener();
-      console.log('Recording stopped:', result);
-
       setIsRecording(false);
-
-      // Store the recording path in AsyncStorage
-      await AsyncStorage.setItem('recordingPath', result);
-      console.log('Recording path stored:', result);
-
+      setIsPaused(false);
+      setCurrentDuration(0);
+      // Generate a unique identifier
+      let newRecording = {
+        id: Date.now(),
+        path: result,
+        duration: formatDuration(currentDuration),
+      };
+      const updatedRecordings = [...recordings, newRecording];
+      setRecordings(updatedRecordings);
+      await saveRecordingsToStorage(updatedRecordings);
       Animated.spring(animatedValue, {
         toValue: 0,
         useNativeDriver: true,
@@ -93,40 +204,30 @@ const HomeScreen = () => {
     }
   };
 
-  // Play the recorded audio
-  const playRecording = async () => {
-    try {
-      const recordingPath = await AsyncStorage.getItem('recordingPath');
-      if (recordingPath) {
-        console.log('Playing recording from:', recordingPath);
-        await audioRecorderPlayer.startPlayer(recordingPath);
-      } else {
-        console.log('No recording found in local storage');
-      }
-    } catch (error) {
-      console.error('Failed to play recording:', error);
+  // Toggle Pause and Resume
+  const togglePauseResume = async () => {
+    if (isPaused) {
+      await audioRecorderPlayer.resumeRecorder();
+      setIsPaused(false);
+      durationInterval.current = setInterval(() => {
+        setCurrentDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      await audioRecorderPlayer.pauseRecorder();
+      setIsPaused(true);
+      clearInterval(durationInterval.current);
     }
   };
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
-      if (nextAppState === 'background') {
-        audioRecorderPlayer.pausePlayer();
-      } else if (nextAppState === 'active') {
-        const recordingPath = AsyncStorage.getItem('recordingPath');
-        if (recordingPath) {
-          audioRecorderPlayer.resumePlayer();
-        }
-      }
-      setAppState(nextAppState);
-    };
 
-    AppState.addEventListener('change', handleAppStateChange);
+  // Format duration into mm:ss
+  const formatDuration = seconds => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
+  };
 
-    return () => {
-      AppState.removeEventListener('change', handleAppStateChange);
-    };
-  }, [audioRecorderPlayer]);
-  // Animated styles
   const animatedStyle = {
     transform: [
       {
@@ -141,97 +242,122 @@ const HomeScreen = () => {
       outputRange: [0.5, 1],
     }),
   };
-  // const onStartPlay = async () => {
-  //   try {
-  //     console.log('onStartPlay');
-  //     const msg = await audioRecorderPlayer.startPlayer();
-  //     console.log('Playback started:', msg);
-  //     audioRecorderPlayer.addPlayBackListener((e) => {
-  //       setCurrentPositionSec(e.currentPosition);
-  //       setCurrentDurationSec(e.duration);
-  //       setPlayTime(audioRecorderPlayer.mmssss(Math.floor(e.currentPosition)));
-  //       setDuration(audioRecorderPlayer.mmssss(Math.floor(e.duration)));
-  //       return;
-  //     });
-  //   } catch (error) {
-  //     console.error('Failed to start playback:', error);
-  //   }
-  // };
-  // const onPausePlay = async () => {
-  //   try {
-  //     await audioRecorderPlayer.pausePlayer();
-  //     console.log('Playback paused');
-  //   } catch (error) {
-  //     console.error('Failed to pause playback:', error);
-  //   }
-  // };
+  // Clear recordings list
+  const clearRecordings = async () => {
+    try {
+      await AsyncStorage.clear();
+      setRecordings([])
+      console.log('AsyncStorage cleared!');
+    } catch (error) {
+      console.error('Failed to clear AsyncStorage:', error);
+    }
+  };
 
-  // const onStopPlay = async () => {
-  //   try {
-  //     console.log('onStopPlay');
-  //     await audioRecorderPlayer.stopPlayer();
-  //     audioRecorderPlayer.removePlayBackListener();
-  //     console.log('Playback stopped');
-  //   } catch (error) {
-  //     console.error('Failed to stop playback:', error);
-  //   }
-  // };
 
   return (
     <View style={styles.container}>
       <View style={styles.animationContainer}>
         <Animated.View style={[styles.circle, animatedStyle]} />
       </View>
-       <View style={styles.buttonContainer}>
-        <Button title="Start Recording" onPress={startRecording} />
-        <Button title="Stop Recording" onPress={stopRecording} />
-        <Button title="Play Recording" onPress={playRecording} />
-
-      </View>
       <View style={styles.buttonContainer}>
-        {/* <Button title="Start Playing" onPress={onStartPlay} /> */}
-        {/* <Button title="Pause Playing" onPress={onPausePlay} />
-        <Button title="Stop Playing" onPress={onStopPlay} /> */}
+        <Button
+          title="Start Recording"
+          onPress={startRecording}
+          disabled={isRecording}
+        />
+        <Button
+          title={isPaused ? 'Resume Recording' : 'Pause Recording'}
+          onPress={togglePauseResume}
+          disabled={!isRecording}
+        />
+        <Button
+          title="Stop Recording"
+          onPress={stopRecording}
+          disabled={!isRecording}
+        />
+        <Button
+          title="Clear Recordings"
+          onPress={clearRecordings}
+          disabled={recordings.length === 0}
+        />
       </View>
-      <View style={styles.infoContainer}>
-        <Text>Play Time: {playTime}</Text>
-        <Text>Duration: {duration}</Text>
+      <View style={styles.currentDurationContainer}>
+        {isRecording && (
+          <Text>Recording Duration: {formatDuration(currentDuration)}</Text>
+        )}
+      </View>
+      <View style={styles.listContainer}>
+        <Text style={styles.header}>Recordings List:</Text>
+        <FlatList
+          data={recordings}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <View style={styles.recordingItem}>
+              <Text style={styles.recordingText}>
+                Recording {item.id} - {item.duration}
+              </Text>
+              <Button
+                title="Play"
+                onPress={() => navigation.navigate('Audio',{data:item})
+              }
+              />
+            </View>
+          )}
+        />
       </View>
     </View>
-  )
-}
+  );
+};
 
-export default HomeScreen
+export default HomeScreen;
 
 const styles = StyleSheet.create({
-  
-    container: {
-      flex: 1,
-      padding: 20,
-      justifyContent: 'center',
-    },
-    buttonContainer: {
-      marginVertical: 10,
-      gap:10,
-      flexDirection: 'column',
-      justifyContent: 'space-around',
-    },
-    infoContainer: {
-      marginTop: 20,
-      alignItems: 'center',
-    },
-    animationContainer: {
-      width: 200,
-      height: 200,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 40,
-    },
-    circle: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
-      backgroundColor: '#ff5722',
-    },
-      
-})
+  container: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  buttonContainer: {
+    marginVertical: 10,
+    gap: 10,
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+  },
+  animationContainer: {
+    width: 200,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    alignSelf: 'center',
+  },
+  circle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ff5722',
+  },
+  currentDurationContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  listContainer: {
+    flex: 1,
+    marginTop: 20,
+  },
+  header: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  recordingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 5,
+    alignItems: 'center',
+  },
+  recordingText: {
+    fontSize: 16,
+  },
+});
