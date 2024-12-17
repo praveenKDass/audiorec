@@ -2,6 +2,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/Home/index';
 import ProfileScreen from '../screens/Profile/index';
 import AudioScreen from '../screens/AudioPlayer';
+import { useTranslation } from 'react-i18next';
+import Settings from '../screens/Settings';
 const Tab = createBottomTabNavigator();
 
 function BottomNavigation() {
@@ -15,6 +17,7 @@ function BottomNavigation() {
         tabBarButton: () => null, // Disable the tab button
       }}/>
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="setting" component={Settings} />
     </Tab.Navigator>
   );
 }
