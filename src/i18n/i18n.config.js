@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
-import { en, hi } from "./translations/index.js";
+import { en, hi } from "./index.js";
 
 
 i18next
