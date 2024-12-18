@@ -63,7 +63,7 @@ const HomeScreen = ({navigation}) => {
     return () => {
       subscription.remove(); // Clean up listener
     };
-  }, [uploadModal]);
+  }, []);
 
 
   const handleAppStateChange = (nextAppState) => {
