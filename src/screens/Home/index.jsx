@@ -7,11 +7,9 @@ import {
   FlatList,
   Animated,
   Alert,
-  PermissionsAndroid,
   Platform,
   Linking,
   AppState ,
-  NativeModules
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +18,8 @@ import {v4 as uuidv4} from 'uuid';
 import RNFS from 'react-native-fs';
 import { request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import { checkDNDPermission,setDNDMode} from '../../components/checkDNDPermission/checkDNDPermission';
+import Card from '../../components/Card/Card';
+import DNDModalComponent from '../../components/Modal/DNDModalComponent';
 const HomeScreen = ({navigation}) => {
   const [audioRecorderPlayer] = useState(new AudioRecorderPlayer());
   const [recordingPath, setRecordingPath] = useState('');
@@ -29,15 +29,20 @@ const HomeScreen = ({navigation}) => {
   const [currentDuration, setCurrentDuration] = useState(0);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const durationInterval = useRef(null);
-
-  const [wasDndEnabled, setWasDndEnabled] = useState(false);
-
   const [appState, setAppState] = useState(AppState.currentState);
-
+   const [modal, setModal] = useState(false);
+   const [dontShowAgain, setDontShowAgain] = useState(false);
   useEffect(() => {
     // Check and request DND permission when the app starts
     if (Platform.OS === 'android') {
-      checkDNDPermission();
+      checkDNDPermission().then(hasPermission => {
+        AsyncStorage.getItem("isDNDModalShow").then(checkDNDModalPermission => {
+          let booleanValue = JSON.parse(checkDNDModalPermission);
+          if (!hasPermission && !booleanValue ) {
+            setModal(true);
+          }
+        });
+      });
     }
 
     // Initial check for DND mode on app startup
@@ -52,7 +57,7 @@ const HomeScreen = ({navigation}) => {
     return () => {
       subscription.remove(); // Clean up listener
     };
-  }, [appState]);
+  }, []);
 
 
   const handleAppStateChange = (nextAppState) => {
@@ -190,6 +195,7 @@ const HomeScreen = ({navigation}) => {
         id: Date.now(),
         path: result,
         duration: formatDuration(currentDuration),
+        isUploaded: false,
       };
       const updatedRecordings = [...recordings, newRecording];
       setRecordings(updatedRecordings);
@@ -247,7 +253,6 @@ const HomeScreen = ({navigation}) => {
     try {
       await AsyncStorage.clear();
       setRecordings([])
-      console.log('AsyncStorage cleared!');
     } catch (error) {
       console.error('Failed to clear AsyncStorage:', error);
     }
@@ -292,19 +297,11 @@ const HomeScreen = ({navigation}) => {
           data={recordings}
           keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
-            <View style={styles.recordingItem}>
-              <Text style={styles.recordingText}>
-                Recording {item.id} - {item.duration}
-              </Text>
-              <Button
-                title="Play"
-                onPress={() => navigation.navigate('Audio',{data:item})
-              }
-              />
-            </View>
+            <Card item={item} setRecordings={setRecordings} />
           )}
         />
       </View>
+      <DNDModalComponent modal={modal} setModal={setModal} dontShowAgain={dontShowAgain} setDontShowAgain={setDontShowAgain}/>
     </View>
   );
 };
@@ -360,4 +357,5 @@ const styles = StyleSheet.create({
   recordingText: {
     fontSize: 16,
   },
+
 });

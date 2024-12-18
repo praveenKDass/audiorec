@@ -26,7 +26,6 @@ const MediaPlayer = ({filePath}) => {
         console.log('Failed to load sound:', error);
         return;
       }
-      console.log(soundRef.current.getDuration(),"this is durationn")
       setDuration(soundRef.current.getDuration());
     });
     return () => {

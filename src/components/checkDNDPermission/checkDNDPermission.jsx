@@ -1,26 +1,29 @@
-import { NativeModules, Platform } from 'react-native';
-
+import { NativeModules, Platform,Alert } from 'react-native';
 const { DNDManagerModule } = NativeModules;
 
+
+
+// Function to check and request DND permissions
 export const checkDNDPermission = async () => {
   if (Platform.OS !== 'android') return;
-
   try {
     const hasPermission = await DNDManagerModule.checkPermission();
-    if (!hasPermission) {
-      DNDManagerModule.requestPermission();
-    }
+    return hasPermission
   } catch (error) {
     console.error('Error checking permission:', error);
+    Alert.alert(
+      'Permission Check Error',
+      'An error occurred while checking Do Not Disturb permissions. Please try again later.'
+    );
   }
 };
 
 export const setDNDMode = async (mode) => {
-  if (Platform.OS !== 'android') return;
+  const hasPermission = await DNDManagerModule.checkPermission();
+  if (Platform.OS !== 'android' || !hasPermission) return ;
 
   try {
     const result = await DNDManagerModule.setDNDMode(mode);
-    console.log(`DND Mode Set to ${mode}:`, result);
   } catch (error) {
     console.error('Error setting DND mode:', error);
   }
@@ -28,10 +31,8 @@ export const setDNDMode = async (mode) => {
 
 export const getDNDMode = async () => {
   if (Platform.OS !== 'android') return;
-
   try {
     const mode = await DNDManagerModule.getDNDMode();
-    console.log('Current DND Mode:', mode);
   } catch (error) {
     console.error('Error getting DND mode:', error);
   }
