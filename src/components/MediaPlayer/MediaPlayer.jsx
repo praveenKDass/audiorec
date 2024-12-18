@@ -9,6 +9,7 @@ import {
 import Sound from 'react-native-sound';
 import Svg, { Line } from 'react-native-svg';
 import Slider from '@react-native-community/slider';
+import { useTranslation } from 'react-i18next';
 const { width } = Dimensions.get('window');
 
 const MediaPlayer = ({filePath}) => {
@@ -18,6 +19,7 @@ const MediaPlayer = ({filePath}) => {
   const [duration, setDuration] = useState(0); // Total audio duration
   const soundRef = useRef(null);
   const progressInterval = useRef(null);
+  const { t } = useTranslation();
   // Initialize the sound
   useEffect(() => {
     Sound.setCategory('Playback');
@@ -137,7 +139,7 @@ const MediaPlayer = ({filePath}) => {
           <Text style={styles.buttonText}>{'<<'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.playButton} onPress={togglePlayback}>
-          <Text style={styles.buttonText}>{isPlaying ? 'Pause' : 'Play'}</Text>
+          <Text style={styles.buttonText}>{isPlaying ? t('PAUSE') : t('PLAY')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlButton} onPress={skipForward}>
           <Text style={styles.buttonText}>{'>>'}</Text>

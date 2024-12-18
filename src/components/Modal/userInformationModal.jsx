@@ -13,10 +13,12 @@ import {
 import Geolocation from 'react-native-geolocation-service';
 import Modal from 'react-native-modal';
 import { actions } from '../../constant/actionConstant';
+import { useTranslation } from 'react-i18next';
 
 const options = actions[0]?.OPTIONS || {};
 
 const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
+  const { t } = useTranslation();
   const [location, setLocation] = useState(null);
   const [formData, setFormData] = useState({
     userName: '',
@@ -30,11 +32,11 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
-            title: 'Location Permission',
-            message: 'We need access to your location to proceed.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
+            title: t('LOCATION_PERMISSION'),
+            message: t('LOCATION_PERMISSION_MSG'),
+            buttonNeutral: t('ASK_ME_LATER'),
+            buttonNegative: t('CANCEL'),
+            buttonPositive: t('OK'),
           }
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
@@ -55,11 +57,11 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
       (error) => {
         if (error.code === 2) {
           Alert.alert(
-            'Location services are not enabled',
-            'Please enable location services and try again.'
+            t('LOCATION_SERVICES_NOT_ENABLED'),
+          t('LOCATION_SERVICES_NOT_ENABLED_MSG')
           );
         } else {
-          Alert.alert('Error', 'Failed to get location');
+          Alert.alert('Error', t('FAILED_TO_GET_LOCATION'));
         }
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
@@ -75,7 +77,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     if (hasPermission) {
       checkLocationServices();
     } else {
-      Alert.alert('Permission Denied', 'Location permission is required to proceed.');
+      Alert.alert(t('LOCATION_PERMISSION_DENIED'), t('LOCATION_PERMISSION_REQUIRED'));
     }
 
     const dataToSubmit = {
@@ -106,11 +108,11 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         >
           <Text style={styles.closeIconText}>×</Text>
         </TouchableOpacity>
-        <Text style={styles.modalTitle}>User Information</Text>
+        <Text style={styles.modalTitle}>{t('USER_INFORMATION')}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Enter Your Name"
+          placeholder={t('ENTER_YOUR_NAME')}
           placeholderTextColor="#666"
           value={formData.userName}
           onChangeText={(text) => handleInputChange('userName', text)}
@@ -118,14 +120,14 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
 
         <TextInput
           style={styles.input}
-          placeholder="Enter Your Phone Number"
+          placeholder={t('ENTER_YOUR_PHONE_NUMBER')}
           placeholderTextColor="#666"
           value={formData.phoneNumber}
           onChangeText={(text) => handleInputChange('phoneNumber', text)}
           keyboardType="phone-pad"
         />
 
-        <Text style={styles.dropdownLabel}>Select an Option</Text>
+        <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
         <View style={styles.dropdown}>
           {Object.entries(options).map(([key, value]) => (
             <TouchableOpacity
@@ -142,7 +144,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         </View>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Submit</Text>
+          <Text style={styles.submitButtonText}>{t('SUBMIT')}</Text>
         </TouchableOpacity>
       </View>
     </Modal>

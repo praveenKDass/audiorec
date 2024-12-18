@@ -5,12 +5,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
+  Alert
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 const UploadAlert = ({ visible, onClose, recordingPath , setRecordings }) => {
-
+  const { t } = useTranslation();
   const updateIsuploadKey =  async (data) => {
     try {
       const recordings = await AsyncStorage.getItem('shikshachaupalrecording');
@@ -31,10 +33,8 @@ const UploadAlert = ({ visible, onClose, recordingPath , setRecordings }) => {
       });
       await updateIsuploadKey(recordingPath)
       console.log('Upload Success', response.data);
-      alert('Recording uploaded successfully');
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload recording');
     }
     onClose();
   };
@@ -48,19 +48,19 @@ const UploadAlert = ({ visible, onClose, recordingPath , setRecordings }) => {
       <View style={styles.modalContainer}>
         <View style={styles.alertBox}>
           <Text style={styles.titleText}>
-            You are uploading the recording of evidence
+            {t('UPLOAD_EVIDENCE_RECORDING')}
           </Text>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={onClose}>
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={styles.buttonText}>{t('CANCEL')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.uploadButton}
               onPress={handleUpload}>
-              <Text style={styles.buttonText}>Upload</Text>
+              <Text style={styles.buttonText}>{t('UPLOAD')}</Text>
             </TouchableOpacity>
           </View>
         </View>

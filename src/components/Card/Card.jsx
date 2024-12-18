@@ -4,24 +4,26 @@ import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import UploadAlert from '../Modal/UploadModalComponent';
+import { useTranslation } from 'react-i18next';
 const Card = ({item,setRecordings}) => {
   const [uploadModal, setuploadModal] = useState(false);
 const navigation = useNavigation()
+const { t } = useTranslation();
 //Function to delete the recording from the local storage
 const deleteRecording = async (recording) => {
   let id = recording.id
   Alert.alert(
-    'Confirm Delete',
+    t('CONFIRM_DELETE'),
     recording.isUploaded
-    ? 'Are you sure you want to delete this recording?'
-    : 'This recording has not been uploaded yet. Are you sure you want to delete it?',
+    ? t('CONFIRM_DELETE_SUCCESS_MSG')
+    : t('CONFIRM_DETELE_FAIL_MSG'),
     [
       {
-        text: 'Cancel',
+        text: t('CANCEL'),
         style: 'cancel',
       },
       {
-        text: 'Delete',
+        text: t('DELETE'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -33,10 +35,10 @@ const deleteRecording = async (recording) => {
             // Save updated list back to AsyncStorage
             await AsyncStorage.setItem('shikshachaupalrecording', JSON.stringify(updatedRecordings));
             setRecordings(updatedRecordings)
-            Alert.alert('Success', `Recording with id '${id}' has been deleted.`);
+            Alert.alert(t('SUCCESS_DELETE'));
           } catch (error) {
             console.error('Error removing item:', error);
-            Alert.alert('Error', 'Failed to delete the Recording.');
+            Alert.alert(t('ERROR_DETELE'));
           }
         },
       },
@@ -49,35 +51,35 @@ const deleteRecording = async (recording) => {
       <View style={styles.card}>
         <View style={styles.infoContainer}>
           <Text style={styles.recordingText}>
-            Recording ID: {item.id}
+          {t('RECORD_ID')} {item.id}
           </Text>
           <Text style={styles.durationText}>
-            Duration: {item.duration}
+          {t('DURATION')}{item.duration}
           </Text>
         </View>
 
         <View style={styles.buttonContainer}>
           <View style={styles.buttonWrapper}>
             <Button
-              title="Play"
+              title={t('PLAY')}
               onPress={() => navigation.navigate('Audio', { data: item })}
             />
           </View>
           <View style={styles.buttonWrapper}>
             <Button
-              title="Delete"
+              title={t('DELETE')}
               color="#F44336"
               onPress={()=>deleteRecording(item)}
             />
           </View>
           {item.isUploaded ? (
             <View style={styles.uploadSuccessContainer}>
-              <Text style={styles.uploadSuccessText}>Upload Success</Text>
+              <Text style={styles.uploadSuccessText}>{t('UPLOAD_SUCCESS')}</Text>
             </View>
           ) : (
             <View style={styles.buttonWrapper}>
               <Button
-                title="Upload"
+                title={t('UPLOAD')}
                 color="#4CAF50"
                 onPress={() => setuploadModal(true)}
               />
