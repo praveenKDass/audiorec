@@ -378,9 +378,11 @@ const HomeScreen = () => {
                     disabled={recordings.length === 0}
                   />  */}
                 </View>
+                {recordings.length >0 &&
                 <View style={styles.currentDurationContainer}>
                 <Text style={styles.listingtitle}>{t("MY_RECORD")}</Text>               
                 </View>
+                }             
               </>
             }
             renderItem={({item}) =>

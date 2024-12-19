@@ -41,14 +41,14 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
     try {
       // First check internet connectivity
       // const networkState = await NetInfo.fetch();
-
+      // console.log(networkState,"Status")
       // if (!networkState.isConnected) {
       //   // Handle no internet case
       //   Alert.alert(
       //     t('OFFLINE'),
       //     t('OFFLINE_MSG'),
       //   );
-      //   return;
+      //   return ;
       // }
       let userDetails = await AsyncStorage.getItem('userDetails');
       userDetails = JSON.parse(userDetails);
@@ -69,7 +69,7 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
         cloud_upload_path: cloudPath,
         phone: userDetails.phoneNumber,
         location: userDetails.location,
-        type: (userDetails.dropdownValue + 1).toString(),
+        type: userDetails.selectedOptions ,
       };
       let createRecord = await audioService.createAudioRecord(reqBody);
       if (createRecord.responseCode === "OK") {
