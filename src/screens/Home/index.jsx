@@ -9,24 +9,22 @@ import {
   Alert,
   Platform,
   Linking,
-  AppState,
+  AppState ,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
 import RNFS from 'react-native-fs';
-import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import {
-  checkDNDPermission,
-  setDNDMode,
-} from '../../components/checkDNDPermission/checkDNDPermission';
+import { request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { checkDNDPermission,setDNDMode} from '../../components/checkDNDPermission/checkDNDPermission';
 import Card from '../../components/Card/Card';
 import DNDModalComponent from '../../components/Modal/DNDModalComponent';
 import UploadAlert from '../../components/Modal/UploadModalComponent';
 import UserInformationModal from '../../components/Modal/userInformationModal';
+import MediaPlayer from '../../components/MediaPlayer/MediaPlayer';
 
-const HomeScreen = ({navigation}) => {
+const HomeScreen = () => {
   const [uploadModal, setuploadModal] = useState(false);
   const [recordUpload,setRecordUpload] = useState();
   const [userInformationModal, setUserInformationModal] = useState(false);
@@ -41,13 +39,15 @@ const HomeScreen = ({navigation}) => {
   const [appState, setAppState] = useState(AppState.currentState);
   const [modal, setModal] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [showMusicPlayer, setShowMusicPlayer] = useState(false);
+  const [selectedMusic,setSelectedMusic] = useState();
   useEffect(() => {
     // Check and request DND permission when the app starts
     if (Platform.OS === 'android') {
       checkDNDPermission().then(hasPermission => {
-        AsyncStorage.getItem('isDNDModalShow').then(checkDNDModalPermission => {
+        AsyncStorage.getItem("isDNDModalShow").then(checkDNDModalPermission => {
           let booleanValue = JSON.parse(checkDNDModalPermission);
-          if (!hasPermission && !booleanValue) {
+          if (!hasPermission && !booleanValue ) {
             setModal(true);
           }
         });
@@ -56,25 +56,25 @@ const HomeScreen = ({navigation}) => {
 
     // Initial check for DND mode on app startup
     if (appState === 'active') {
-      setDNDMode('PRIORITY_MODE');
+      setDNDMode('PRIORITY_MODE'); 
     }
 
+
     // Listen for app state changes
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove(); // Clean up listener
     };
   }, []);
 
-  const handleAppStateChange = nextAppState => {
-    if (nextAppState === 'active') {
-      setDNDMode('PRIORITY_MODE'); // Enable DND mode
+
+  const handleAppStateChange = (nextAppState) => {
+    if (nextAppState === 'active') {        
+        setDNDMode('PRIORITY_MODE'); // Enable DND mode
     } else if (nextAppState === 'background' || nextAppState === 'inactive') {
-      setDNDMode('NORMAL_MODE'); // Disable DND mode
+        
+        setDNDMode('NORMAL_MODE'); // Disable DND mode
     }
     setAppState(nextAppState);
 };
@@ -86,47 +86,46 @@ const handleUserInformationModalSubmit = (data) => {
   startRecording()
 };
 
-  //above line for dnd mode
+//above line for dnd mode
   // Request microphone permissions
   const requestPermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const recordAudioPermission = PERMISSIONS.ANDROID.RECORD_AUDIO;
-        let fineLocation = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
+   
+      if (Platform.OS === 'android') {
+        try {
+          const recordAudioPermission = PERMISSIONS.ANDROID.RECORD_AUDIO;
+          let fineLocation = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
 
-        // Request each permission individually
-        const fineLocationStaus = await request(fineLocation);
-        const recordAudioPermissionStatus = await request(
-          recordAudioPermission,
-        );
-        if (
-          recordAudioPermissionStatus === RESULTS.GRANTED &&
-          fineLocationStaus === RESULTS.GRANTED
-        ) {
-          return true;
-        } else {
-          Alert.alert(
-            'Permissions Required',
-            'Please grant the required permissions to use this feature.',
-            [
-              {
-                text: 'OK',
-                onPress: () => console.log('Permission denied'),
-              },
-              {
-                text: 'Go to Settings',
-                onPress: () => Linking.openSettings(),
-                style: 'cancel',
-              },
-            ],
-          );
+          // Request each permission individually
+          const fineLocationStaus = await request(fineLocation);
+          const recordAudioPermissionStatus = await request(recordAudioPermission);
+          if (
+            recordAudioPermissionStatus ===RESULTS.GRANTED &&
+            fineLocationStaus ===RESULTS.GRANTED 
+          ) {
+            return true;
+          } else {
+            Alert.alert(
+              'Permissions Required',
+              'Please grant the required permissions to use this feature.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => console.log('Permission denied'),
+                },
+                {
+                  text: 'Go to Settings',
+                  onPress: () => Linking.openSettings(),
+                  style: 'cancel',
+                },
+              ]
+            );          }
+        } catch (err) {
+          console.warn(err);
+          return;
         }
-      } catch (err) {
-        console.warn(err);
-        return;
       }
-    }
-  };
+    
+  }
 
   // Save recordings to local storage
   const saveRecordingsToStorage = async recordings => {
@@ -220,11 +219,6 @@ const handleUserInformationModalSubmit = (data) => {
       setRecordings(updatedRecordings);
       await saveRecordingsToStorage(updatedRecordings);
       await setuploadModal(true)
-      Animated.spring(animatedValue, {
-        toValue: 0,
-        useNativeDriver: true,
-        speed: 20,
-      }).start();
     } catch (error) {
       console.error('Failed to stop recording:', error);
     }
@@ -247,41 +241,28 @@ const handleUserInformationModalSubmit = (data) => {
 
   // Format duration into mm:ss
   const formatDuration = seconds => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
+    const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-  
-    return `${hrs.toString().padStart(2, '0')}:${mins
+    return `${mins.toString().padStart(2, '0')}:${secs
       .toString()
-      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      .padStart(2, '0')}`;
   };
 
-  const animatedStyle = {
-    transform: [
-      {
-        scale: animatedValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, 2.5],
-        }),
-      },
-    ],
-    opacity: animatedValue.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.5, 1],
-    }),
-  };
   // Clear recordings list
   const clearRecordings = async () => {
     try {
       await AsyncStorage.clear();
-      setRecordings([]);
+      setRecordings([])
     } catch (error) {
       console.error('Failed to clear AsyncStorage:', error);
     }
   };
 
+
   return (
+    <>
     <View style={styles.container}>
+      {!showMusicPlayer ? (
       <FlatList
         data={[...recordings]} // Add dummy data for non-list items
         keyExtractor={(item, index) =>
@@ -332,18 +313,22 @@ const handleUserInformationModalSubmit = (data) => {
           </>
         }
         renderItem={({item}) =>
-          item.id ? <Card item={item} setRecordings={setRecordings} /> : null
+          item.id ? <Card item={item} setRecordings={setRecordings} setSelectedMusic={setSelectedMusic} setShowMusicPlayer={setShowMusicPlayer}/> : null
         }
         contentContainerStyle={styles.flatListContent}
         showsVerticalScrollIndicator={false}
       />
+      ):(
+      <MediaPlayer filePath={selectedMusic.path} setShowMusicPlayer={setShowMusicPlayer} setSelectedMusic={setSelectedMusic} selectedMusic={selectedMusic}/>
+      )}
+      </View>
       <DNDModalComponent
         modal={modal}
         setModal={setModal}
         dontShowAgain={dontShowAgain}
         setDontShowAgain={setDontShowAgain}
       />
-    </View>
+    </>
   );
 };
 
@@ -362,17 +347,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   animationContainer: {
-    marginVertical: 10,
+    width: "100%",
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     alignSelf: 'center',
   },
-  animationText: {
-    fontSize: 50,
-    color:"#2196F3"
-  },
-
   circle: {
     width: 100,
     height: 100,
@@ -402,4 +383,10 @@ const styles = StyleSheet.create({
   recordingText: {
     fontSize: 16,
   },
+  animationText:{
+   fontSize:50,
+   color: '#2196F3',
+   fontWeight: 'bold',
+  }
+
 });

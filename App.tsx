@@ -35,20 +35,12 @@ type SectionProps = PropsWithChildren<{
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-
-  // const backgroundStyle = {
-  //   backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  // };
-
   return (
     <View style={styles.sectionContainer}>
-      {/* <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        // backgroundColor={backgroundStyle.backgroundColor}
-      />   */}
-        <NavigationContainer>
+        {/* <NavigationContainer>
           <BottomNavigation/>
-        </NavigationContainer>
+        </NavigationContainer> */}
+        <HomeScreen/>
     </View>
   );
 }

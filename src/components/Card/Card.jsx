@@ -5,9 +5,9 @@ import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import UploadAlert from '../Modal/UploadModalComponent';
 import { useTranslation } from 'react-i18next';
-const Card = ({item,setRecordings}) => {
-  const [uploadModal, setuploadModal] = useState(false);
-const navigation = useNavigation()
+const Card = ({item,setRecordings,setSelectedMusic,setShowMusicPlayer}) => {
+const [uploadModal, setuploadModal] = useState(false);
+// const navigation = useNavigation()
 const { t } = useTranslation();
 //Function to delete the recording from the local storage
 const deleteRecording = async (recording) => {
@@ -35,6 +35,7 @@ const deleteRecording = async (recording) => {
             // Save updated list back to AsyncStorage
             await AsyncStorage.setItem('shikshachaupalrecording', JSON.stringify(updatedRecordings));
             setRecordings(updatedRecordings)
+            setSelectedMusic()
             Alert.alert(t('SUCCESS_DELETE'));
           } catch (error) {
             console.error('Error removing item:', error);
@@ -46,6 +47,20 @@ const deleteRecording = async (recording) => {
   );
 };
 
+const handlePlay =(recordings)=>{
+  setSelectedMusic(recordings)
+  setShowMusicPlayer(true)  
+}
+
+// Function to format timestamp
+const formatDate = (timestamp) => {
+  // Convert the timestamp to a Date object
+  const date = new Date(timestamp);
+
+  // Format the date as "DD-MMM-YYYY"
+  const options = { day: '2-digit', month: 'short', year: 'numeric' };
+  return new Intl.DateTimeFormat('en-GB', options).format(date);
+};
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -56,13 +71,17 @@ const deleteRecording = async (recording) => {
           <Text style={styles.durationText}>
           {t('DURATION')}{item.duration}
           </Text>
+          <Text style={styles.durationText}>
+          {t('CREATED_AT')} : {formatDate(item.id)}
+          </Text>
         </View>
 
         <View style={styles.buttonContainer}>
           <View style={styles.buttonWrapper}>
             <Button
               title={t('PLAY')}
-              onPress={() => navigation.navigate('Audio', { data: item })}
+              // onPress={() => navigation.navigate('Audio', { data: item })}
+              onPress={()=>handlePlay(item)}
             />
           </View>
           <View style={styles.buttonWrapper}>
@@ -101,7 +120,6 @@ export default Card;
 
 const styles = StyleSheet.create({
   container:{
-    paddingHorizontal: 10,
     paddingVertical: 5,
   },
   card:{

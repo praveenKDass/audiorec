@@ -35,5 +35,6 @@
     "LOCATION_PERMISSION":"Location Permission",
     "LOCATION_PERMISSION_MSG":"We need access to your location to proceed.",
     "ASK_ME_LATER":"Ask Me Later",
-    "OK":"OK"
+    "OK":"OK",
+    "CREATED_AT":"Created At"
 }
