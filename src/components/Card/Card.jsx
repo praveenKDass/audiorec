@@ -16,7 +16,7 @@ const deleteRecording = async (recording) => {
     t('CONFIRM_DELETE'),
     recording.isUploaded
     ? t('CONFIRM_DELETE_SUCCESS_MSG')
-    : t('CONFIRM_DETELE_FAIL_MSG'),
+    : t('CONFIRM_DELETE_FAIL_MSG'),
     [
       {
         text: t('CANCEL'),
