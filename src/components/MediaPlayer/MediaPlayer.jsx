@@ -136,6 +136,36 @@ const MediaPlayer = ({
       '0',
     )}`;
   };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    
+    const weekday = date.toLocaleString('en-IN', {
+      weekday: 'long',
+      timeZone: 'Asia/Kolkata'
+    });
+    
+    const time = date.toLocaleString('en-IN', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZone: 'Asia/Kolkata'
+    });
+  
+    return `${weekday} at ${time}`;
+  };
+  
+  const formatDateShort = (timestamp) => {
+    const date = new Date(timestamp);
+    
+    const options = {
+      day: '2-digit',
+      month: 'short',
+      timeZone: 'Asia/Kolkata'
+    };
+  
+    return date.toLocaleString('en-IN', options).replace('-', ' ');
+  };
   return (
     <View style={styles.container}>
       {/* Close Button */}
@@ -144,14 +174,14 @@ const MediaPlayer = ({
       </TouchableOpacity>
       <View style={styles.titleContainer}>
         <Text style={[styles.titleText, styles.greyText]}>
-          {t('RECORD_ID')} {selectedMusic.id}
+          {formatTimestamp(selectedMusic.id)}
         </Text>
         <Text style={[styles.infoText, styles.greyText]}>
-          {t('DURATION')} {selectedMusic.duration}
+          {formatDateShort(selectedMusic.id)} - {selectedMusic.duration}
         </Text>
-        <Text style={[styles.infoText, styles.greyText]}>
+        {/* <Text style={[styles.infoText, styles.greyText]}>
           {t('CREATED_AT')} : {formatDate(selectedMusic.id)}
-        </Text>
+        </Text> */}
       </View>
 
       {/* Sound Wave Equalizer */}
@@ -279,6 +309,8 @@ const styles = StyleSheet.create({
     flex: 0.2,
     flexDirection: 'column',
     padding: 10,
+    alignItems:"left",
+    width: "100%",
   },
   titleText: {
     fontSize: 20,

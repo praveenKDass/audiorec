@@ -49,7 +49,6 @@ const ProfileScreen = () => {
   const checkLocationServices = () => {
     Geolocation.getCurrentPosition(
       (position) => {
-        console.log('Position:', position);
         setLocation(position);
         setIsModalVisible(true);
       },
@@ -85,7 +84,6 @@ const ProfileScreen = () => {
       ...formData,
       location: location ? { lat: location.coords.latitude, lon: location.coords.longitude } : null,
     };
-    console.log('Submitted Data:', dataToSubmit);
     Alert.alert('Data Submitted', JSON.stringify(dataToSubmit));
     setFormData({
       userName: '',

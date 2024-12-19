@@ -115,7 +115,6 @@ const HomeScreen = () => {
 
   //on submited the userInformationModal
   const handleUserInformationModalSubmit = data => {
-    console.log('Data received from modal:', data);
     setUserInformationModal(false);
     startRecording();
   };
@@ -367,24 +366,21 @@ const HomeScreen = () => {
                     title={t('STOP_RECORD')}
                     onPress={stopRecording}
                     disabled={!isRecording}
-                  />
-                  <Button
-                    title={t('CLEAR_RECORD')}
+                    color="#F44336"
+                    />
+                  {/* <Button
+                    title="Clear Recordings"
                     onPress={clearRecordings}
                     disabled={recordings.length === 0}
-                  />
+                  /> 
                 </View>
                 <View style={styles.currentDurationContainer}>
-                  {isRecording && (
-                    <Text>
-                      {t('RECORD_DURATION')} {formatDuration(currentDuration)}
-                    </Text>
-                  )}
+                <Text style={styles.listingtitle}>My Recordings:</Text>               
                 </View>
               </>
             }
             renderItem={({item}) =>
-              item.id ? (
+               item.id ? (
                 <Card
                   item={item}
                   setRecordings={setRecordings}
@@ -471,7 +467,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff5722',
   },
   currentDurationContainer: {
-    alignItems: 'center',
+    alignItems: 'left',
     marginVertical: 10,
   },
   listContainer: {
@@ -499,5 +495,10 @@ const styles = StyleSheet.create({
     color: '#2196F3',
     fontWeight: 'bold',
   },
+  listingtitle:{
+    fontSize: 20,
+    color: '#2196F3',
+    fontWeight: 'bold',
+  }
 });
 

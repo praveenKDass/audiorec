@@ -183,6 +183,18 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
             placeholder={t('SELECT_AN_OPTION')}
             maxHeight={200}
           />
+          {Object.entries(options).map(([key, value],index) => (
+            <TouchableOpacity
+              key={key}
+              style={[
+                styles.dropdownItem,
+                formData.dropdownValue === index && styles.selectedItem,
+              ]}
+              onPress={() => handleInputChange('dropdownValue', index)}
+            >
+              <Text style={styles.dropdownText}>{value}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
         {errors.dropdownValue && <Text style={styles.errorText}>{errors.dropdownValue}</Text>}
 

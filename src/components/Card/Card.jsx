@@ -61,19 +61,49 @@ const formatDate = (timestamp) => {
   const options = { day: '2-digit', month: 'short', year: 'numeric' };
   return new Intl.DateTimeFormat('en-GB', options).format(date);
 };
+
+const formatTimestamp = (timestamp) => {
+  const date = new Date(timestamp);
+  
+  const weekday = date.toLocaleString('en-IN', {
+    weekday: 'long',
+    timeZone: 'Asia/Kolkata'
+  });
+  
+  const time = date.toLocaleString('en-IN', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+    timeZone: 'Asia/Kolkata'
+  });
+
+  return `${weekday} at ${time}`;
+};
+
+const formatDateShort = (timestamp) => {
+  const date = new Date(timestamp);
+  
+  const options = {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'Asia/Kolkata'
+  };
+
+  return date.toLocaleString('en-IN', options).replace('-', ' ');
+};
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <View style={styles.infoContainer}>
           <Text style={styles.recordingText}>
-          {t('RECORD_ID')} {item.id}
+           {formatTimestamp(item.id)}
           </Text>
           <Text style={styles.durationText}>
-          {t('DURATION')}{item.duration}
+           {formatDateShort(item.id)} - {item.duration}
           </Text>
-          <Text style={styles.durationText}>
+          {/* <Text style={styles.durationText}>
           {t('CREATED_AT')} : {formatDate(item.id)}
-          </Text>
+          </Text> */}
         </View>
 
         <View style={styles.buttonContainer}>
@@ -156,7 +186,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   uploadSuccessContainer: {
-    flex: 2,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,

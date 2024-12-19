@@ -5,34 +5,77 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  Alert
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
+import NetInfo from '@react-native-community/netinfo';
+import {audioService} from '../../services/api/audioService';
 
-const UploadAlert = ({ visible, onClose, recordingPath , setRecordings }) => {
-  const { t } = useTranslation();
-  const updateIsuploadKey =  async (data) => {
+const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
+  const {t} = useTranslation();
+  const updateIsuploadKey = async data => {
     try {
       const recordings = await AsyncStorage.getItem('shikshachaupalrecording');
       const parsedItems = recordings ? JSON.parse(recordings) : [];
-      let updatedRecordings = parsedItems.map((item) => item.id === data.id ? { ...item, isUploaded: true } : item);
-      await AsyncStorage.setItem('shikshachaupalrecording', JSON.stringify(updatedRecordings));
-      setRecordings(updatedRecordings)
+      let updatedRecordings = parsedItems.map(item =>
+        item.id === data.id ? {...item, isUploaded: true} : item,
+      );
+      await AsyncStorage.setItem(
+        'shikshachaupalrecording',
+        JSON.stringify(updatedRecordings),
+      );
+      setRecordings(updatedRecordings);
     } catch (error) {
       console.error('Error upadteIsuploadKey item:', error);
       Alert.alert('Error', 'Failed to upadteIsuploadKey the Recording.');
     }
-  }
+  };
 
   const handleUpload = async () => {
     try {
-      const response = await axios.post('https://your-api-endpoint.com/upload', {
-        file: recordingPath,
+      // First check internet connectivity
+      const networkState = await NetInfo.fetch();
+
+      if (!networkState.isConnected) {
+        // Handle no internet case
+        Alert.alert(
+          'No Internet Connection',
+          'Please check your internet connection and try again.',
+        );
+        return;
+      }
+      let userDetails = await AsyncStorage.getItem('userDetails');
+      userDetails = JSON.parse(userDetails);
+      //  Get pre-signed URL
+      const preSignedData = await audioService.getPreSignedUrl({
+        fileName: recordingPath.path.split('/').pop(),
       });
-      await updateIsuploadKey(recordingPath)
-      console.log('Upload Success', response.data);
+      let signedUrl = preSignedData.result.signedUrl;
+      let cloudPath = preSignedData.result.filePath;
+      let destinationPath = preSignedData.result.destFilePath;
+      let uploadAudioFile = await audioService.uploadFile(
+        signedUrl,
+        recordingPath.path,
+      );
+      let reqBody = {
+        name: userDetails.userName,
+        cloudPath: cloudPath,
+        phone: userDetails.phoneNumber,
+        location: userDetails.location,
+        type: userDetails.dropdownValue + 1,
+      };
+      let createRecord = await audioService.createAudioRecord(reqBody);
+      if (createRecord.success && createRecord.status === 200) {
+        await updateIsuploadKey(recordingPath);
+      } else {
+        Alert.alert(
+          'Upload failed',
+          'Please check your internet connection and try again.',
+        );
+        return;
+      }
     } catch (error) {
       console.error('Upload failed:', error);
     }
@@ -47,13 +90,9 @@ const UploadAlert = ({ visible, onClose, recordingPath , setRecordings }) => {
       onRequestClose={onClose}>
       <View style={styles.modalContainer}>
         <View style={styles.alertBox}>
-          <Text style={styles.titleText}>
-            {t('UPLOAD_EVIDENCE_RECORDING')}
-          </Text>
+          <Text style={styles.titleText}>{t('UPLOAD_EVIDENCE_RECORDING')}</Text>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onClose}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.buttonText}>{t('CANCEL')}</Text>
             </TouchableOpacity>
 
