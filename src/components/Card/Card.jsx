@@ -123,8 +123,8 @@ const formatDateShort = (timestamp) => {
           </View>
           {item.isUploaded ? (
             <View style={styles.uploadSuccessContainer}>
-              <Text style={styles.uploadSuccessText}>{t('UPLOAD_SUCCESS')}</Text>
-            </View>
+              <Text style={[styles.uploadSuccessText, styles.capitalize]}>{t('UPLOAD_SUCCESS')}</Text>
+          </View>
           ) : (
             <View style={styles.buttonWrapper}>
               <Button
@@ -196,4 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  capitalize: {
+    textTransform: 'capitalize',
+  }
 });
