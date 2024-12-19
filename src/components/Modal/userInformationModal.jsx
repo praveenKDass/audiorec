@@ -1,7 +1,6 @@
-import React, { useState ,useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
-  Button,
   TextInput,
   Text,
   PermissionsAndroid,
@@ -9,13 +8,19 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import Modal from 'react-native-modal';
-import { actions } from '../../constant/actionConstant';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const options = actions[0]?.OPTIONS || {};
+import { Dropdown } from 'react-native-element-dropdown';
+
+const options = {
+  1: "Celebrating if someone took some step after the first Chaupal towards preventing their girls' dropout.",
+  2: "Shared Seeing: Challenges that are preventing girls from continuing education till grade 12",
+  3: "Shared solving: Discussing and engaging in local problem solving for some of these challenges."
+};
 
 const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
   const { t } = useTranslation();
@@ -25,7 +30,8 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     phoneNumber: '',
     dropdownValue: Object.values(options)[0] || '',
   });
-  // get userDetails if its already present in the local storage
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -43,7 +49,8 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     };
 
     fetchUserDetails();
-  }, []); 
+  }, []);
+
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -74,10 +81,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
       },
       (error) => {
         if (error.code === 2) {
-          Alert.alert(
-            t('LOCATION_SERVICES_NOT_ENABLED'),
-          t('LOCATION_SERVICES_NOT_ENABLED_MSG')
-          );
+          Alert.alert(t('LOCATION_SERVICES_NOT_ENABLED'), t('LOCATION_SERVICES_NOT_ENABLED_MSG'));
         } else {
           Alert.alert('Error', t('FAILED_TO_GET_LOCATION'));
         }
@@ -90,7 +94,24 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     setFormData({ ...formData, [key]: value });
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.userName) {
+      newErrors.userName = t('USER_NAME_REQUIRED');
+    }
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = t('PHONE_NUMBER_REQUIRED');
+    }
+    if (!formData.dropdownValue) {
+      newErrors.dropdownValue = t('SELECT_AN_OPTION_REQUIRED');
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     const hasPermission = await requestLocationPermission();
     if (hasPermission) {
       checkLocationServices();
@@ -108,10 +129,10 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     const jsonValue = JSON.stringify(dataToSubmit);
     await AsyncStorage.setItem('userDetails', jsonValue);
     // setFormData({
-    //     userName: '',
-    //     phoneNumber: '',
-    //     dropdownValue: Object.values(options)[0] || '',
-    // })
+    //   userName: '',
+    //   phoneNumber: '',
+    //   dropdownValue: Object.values(options)[0] || '',
+    // });
   };
 
   return (
@@ -131,37 +152,39 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         <Text style={styles.modalTitle}>{t('USER_INFORMATION')}</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.userName && styles.inputError]}
           placeholder={t('ENTER_YOUR_NAME')}
           placeholderTextColor="#666"
           value={formData.userName}
           onChangeText={(text) => handleInputChange('userName', text)}
         />
+        {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, errors.phoneNumber && styles.inputError]}
           placeholder={t('ENTER_YOUR_PHONE_NUMBER')}
           placeholderTextColor="#666"
           value={formData.phoneNumber}
           onChangeText={(text) => handleInputChange('phoneNumber', text)}
           keyboardType="phone-pad"
         />
+        {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
 
         <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
         <View style={styles.dropdown}>
-          {Object.entries(options).map(([key, value]) => (
-            <TouchableOpacity
-              key={key}
-              style={[
-                styles.dropdownItem,
-                formData.dropdownValue === value && styles.selectedItem,
-              ]}
-              onPress={() => handleInputChange('dropdownValue', value)}
-            >
-              <Text style={styles.dropdownText}>{value}</Text>
-            </TouchableOpacity>
-          ))}
+          <Dropdown
+            style={[styles.dropdownStyle, errors.dropdownValue && styles.inputError]}
+            data={Object.entries(options).map(([key, value]) => ({
+              label: value,
+              value: value,
+            }))}
+            value={formData.dropdownValue}
+            onChange={item => handleInputChange('dropdownValue', item.value)}
+            placeholder={t('SELECT_AN_OPTION')}
+            maxHeight={200}
+          />
         </View>
+        {errors.dropdownValue && <Text style={styles.errorText}>{errors.dropdownValue}</Text>}
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>{t('SUBMIT')}</Text>
@@ -213,6 +236,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     fontSize: 16,
   },
+  inputError: {
+    borderColor: 'red',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
+    textAlign: 'left',
+  },
   dropdownLabel: {
     fontSize: 16,
     fontWeight: '500',
@@ -220,25 +252,15 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   dropdown: {
-    borderWidth: 1,
-    borderColor: '#2196F3',
-    borderRadius: 8,
     width: '100%',
-    paddingVertical: 5,
     marginBottom: 20,
   },
-  dropdownItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 3,
-    borderRadius: 5,
-  },
-  selectedItem: {
-    backgroundColor: '#2196F3',
-  },
-  dropdownText: {
-    color: '#555',
-    fontSize: 16,
+  dropdownStyle: {
+    height: 50,
+    borderColor: '#2196F3',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
   },
   submitButton: {
     backgroundColor: '#2196F3',

@@ -49,5 +49,8 @@
     "CLEAR_RECORD":"Clear Recordings",
     "RECORD_DURATION":"Recording Duration:",
     "RESUME_RECORD":"Resume Recording",
-    "PAUSE_RECORD":"Pause Recording"
+    "PAUSE_RECORD":"Pause Recording",
+    "USER_NAME_REQUIRED":"please fill the name",
+    "PHONE_NUMBER_REQUIRED":"Phone Number is required",
+    "SELECT_AN_OPTION_REQUIRED":"please select any Option"
 }
