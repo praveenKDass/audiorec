@@ -68,8 +68,16 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
 
   const checkLocationServices = () => {
     Geolocation.getCurrentPosition(
-      (position) => {
-        setLocation(position);
+      async (position) => {
+        let updateLocation=await AsyncStorage.getItem('userDetails');
+        let newUserInformation=updateLocation ? JSON.parse(updateLocation):{}
+        let updateData={
+          ...newUserInformation,
+          location:{ lat: position.coords.latitude, lon: position.coords.longitude }
+        }
+        let data=JSON.stringify(updateData)
+        await AsyncStorage.setItem('userDetails',data)
+        console.log("update data",await AsyncStorage.getItem('userDetails'))
       },
       (error) => {
         if (error.code === 2) {
@@ -117,6 +125,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         ? { lat: location.coords.latitude, lon: location.coords.longitude }
         : null,
     };
+    console.log("DataToSubmit",dataToSubmit)
     onSubmit(dataToSubmit);
     const jsonValue = JSON.stringify(dataToSubmit);
     await AsyncStorage.setItem('userDetails', jsonValue);
@@ -185,7 +194,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         {errors.radioButtonsValue && <Text style={styles.errorText}>{errors.radioButtonsValue}</Text>}
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>{t('SUBMIT')}</Text>
+          <Text style={styles.submitButtonText}>{t('START_RECORD')}</Text>
         </TouchableOpacity>
       </View>
     </Modal>
