@@ -161,7 +161,7 @@ const UserInformationModal = ({isVisible, setIsVisible, onSubmit}) => {
     await AsyncStorage.setItem('userDetails', jsonValue);
   };
 
-  const checkboxData = OPTIONS.map(option => ({
+  const radioButtonsData = OPTIONS.map(option => ({
     id: option.id,
     label: t(option.key),
     value: option.id,
