@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import {
   View,
   Button,
@@ -14,7 +14,7 @@ import Geolocation from 'react-native-geolocation-service';
 import Modal from 'react-native-modal';
 import { actions } from '../../constant/actionConstant';
 import { useTranslation } from 'react-i18next';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const options = actions[0]?.OPTIONS || {};
 
 const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
@@ -25,7 +25,25 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     phoneNumber: '',
     dropdownValue: Object.values(options)[0] || '',
   });
+  // get userDetails if its already present in the local storage
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('userDetails');
+        if (jsonValue !== null) {
+          const storedData = JSON.parse(jsonValue);
+          setFormData({
+            ...formData,
+            ...storedData,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user details from AsyncStorage', error);
+      }
+    };
 
+    fetchUserDetails();
+  }, []); 
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -87,11 +105,13 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         : null,
     };
     onSubmit(dataToSubmit);
-    setFormData({
-        userName: '',
-        phoneNumber: '',
-        dropdownValue: Object.values(options)[0] || '',
-    })
+    const jsonValue = JSON.stringify(dataToSubmit);
+    await AsyncStorage.setItem('userDetails', jsonValue);
+    // setFormData({
+    //     userName: '',
+    //     phoneNumber: '',
+    //     dropdownValue: Object.values(options)[0] || '',
+    // })
   };
 
   return (
@@ -186,7 +206,7 @@ const styles = StyleSheet.create({
   input: {
     height: 50,
     width: '100%',
-    borderColor: '#8e44ad',
+    borderColor: '#2196F3',
     borderWidth: 1,
     borderRadius: 8,
     marginBottom: 15,
@@ -201,7 +221,7 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     borderWidth: 1,
-    borderColor: '#8e44ad',
+    borderColor: '#2196F3',
     borderRadius: 8,
     width: '100%',
     paddingVertical: 5,
@@ -214,14 +234,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   selectedItem: {
-    backgroundColor: '#d2b4de',
+    backgroundColor: '#2196F3',
   },
   dropdownText: {
     color: '#555',
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#8e44ad',
+    backgroundColor: '#2196F3',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
