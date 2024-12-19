@@ -7,7 +7,6 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from 'react-i18next';
 import NetInfo from '@react-native-community/netinfo';
@@ -29,7 +28,7 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
       setRecordings(updatedRecordings);
     } catch (error) {
       console.error('Error upadteIsuploadKey item:', error);
-      Alert.alert('Error', 'Failed to upadteIsuploadKey the Recording.');
+      Alert.alert('Error', t('RECORD_UPLOAD_FAIL_MSG'));
     }
   };
 
@@ -41,8 +40,8 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
       if (!networkState.isConnected) {
         // Handle no internet case
         Alert.alert(
-          'No Internet Connection',
-          'Please check your internet connection and try again.',
+          t('OFFLINE'),
+          t('OFFLINE_MSG'),
         );
         return;
       }
@@ -71,8 +70,8 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
         await updateIsuploadKey(recordingPath);
       } else {
         Alert.alert(
-          'Upload failed',
-          'Please check your internet connection and try again.',
+          t('UPLOAD_FAILED'),
+          t('OFFLINE_MSG'),
         );
         return;
       }

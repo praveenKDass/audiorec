@@ -52,5 +52,13 @@
     "PAUSE_RECORD":"Pause Recording",
     "USER_NAME_REQUIRED":"please fill the name",
     "PHONE_NUMBER_REQUIRED":"Phone Number is required",
-    "SELECT_AN_OPTION_REQUIRED":"please select any Option"
+    "SELECT_AN_OPTION_REQUIRED":"please select any Option",
+    "MY_RECORD":"My Recordings:",
+    "RECORD_UPLOAD_FAIL_MSG":"Failed to upadteIsuploadKey the Recording.",
+    "OFFLINE":"No Internet Connection",
+    "OFFLINE_MSG":"Please check your internet connection and try again.",
+    "UPLOAD_FAILED":"Upload failed",
+    "OPTIONS_1": "Celebrating if someone took some step after the first Chaupal towards preventing their girls' dropout.",
+    "OPTIONS_2": "Shared Seeing: Challenges that are preventing girls from continuing education till grade 12",
+    "OPTIONS_3": "Shared solving: Discussing and engaging in local problem solving for some of these challenges."
 }

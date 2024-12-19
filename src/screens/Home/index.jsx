@@ -368,14 +368,14 @@ const HomeScreen = () => {
                     disabled={!isRecording}
                     color="#F44336"
                     />
-                  {/* <Button
+                {/* <Button
                     title="Clear Recordings"
                     onPress={clearRecordings}
                     disabled={recordings.length === 0}
-                  /> 
+                  />  */}
                 </View>
                 <View style={styles.currentDurationContainer}>
-                <Text style={styles.listingtitle}>My Recordings:</Text>               
+                <Text style={styles.listingtitle}>{t("MY_RECORD")}</Text>               
                 </View>
               </>
             }

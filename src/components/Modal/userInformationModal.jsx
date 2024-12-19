@@ -8,19 +8,12 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import Modal from 'react-native-modal';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Dropdown } from 'react-native-element-dropdown';
-
-const options = {
-  1: "Celebrating if someone took some step after the first Chaupal towards preventing their girls' dropout.",
-  2: "Shared Seeing: Challenges that are preventing girls from continuing education till grade 12",
-  3: "Shared solving: Discussing and engaging in local problem solving for some of these challenges."
-};
+import { ACTION_OPTIONS, OPTIONS } from '../../constant/actionConstant'
 
 const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
   const { t } = useTranslation();
@@ -28,7 +21,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
   const [formData, setFormData] = useState({
     userName: '',
     phoneNumber: '',
-    dropdownValue: Object.values(options)[0] || '',
+    radioButtonsValue: ACTION_OPTIONS.OPTION_1,
   });
   const [errors, setErrors] = useState({});
 
@@ -102,8 +95,8 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = t('PHONE_NUMBER_REQUIRED');
     }
-    if (!formData.dropdownValue) {
-      newErrors.dropdownValue = t('SELECT_AN_OPTION_REQUIRED');
+    if (!formData.radioButtonsValue) {
+      newErrors.radioButtonsValue = t('SELECT_AN_OPTION_REQUIRED');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -128,12 +121,14 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
     onSubmit(dataToSubmit);
     const jsonValue = JSON.stringify(dataToSubmit);
     await AsyncStorage.setItem('userDetails', jsonValue);
-    // setFormData({
-    //   userName: '',
-    //   phoneNumber: '',
-    //   dropdownValue: Object.values(options)[0] || '',
-    // });
   };
+
+  const radioButtonsData = OPTIONS.map((button) => ({
+    id: button.id,
+    label: t(button.key),
+    value: button.id,
+    selected: formData.radioButtonsValue === button.id,
+  }));
 
   return (
     <Modal
@@ -171,32 +166,24 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
 
         <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
-        <View style={styles.dropdown}>
-          <Dropdown
-            style={[styles.dropdownStyle, errors.dropdownValue && styles.inputError]}
-            data={Object.entries(options).map(([key, value]) => ({
-              label: value,
-              value: value,
-            }))}
-            value={formData.dropdownValue}
-            onChange={item => handleInputChange('dropdownValue', item.value)}
-            placeholder={t('SELECT_AN_OPTION')}
-            maxHeight={200}
-          />
-          {Object.entries(options).map(([key, value],index) => (
+        <View style={styles.radioGroup}>
+          {radioButtonsData.map((button) => (
             <TouchableOpacity
-              key={key}
-              style={[
-                styles.dropdownItem,
-                formData.dropdownValue === index && styles.selectedItem,
-              ]}
-              onPress={() => handleInputChange('dropdownValue', index)}
+              key={button.id}
+              style={styles.radioButtonContainer}
+              onPress={() => handleInputChange('radioButtonsValue', button.value)}
             >
-              <Text style={styles.dropdownText}>{value}</Text>
+              <View
+                style={[
+                  styles.radioButton,
+                  button.selected && styles.radioButtonSelected,
+                ]}
+              />
+              <Text style={styles.radioButtonLabel}>{button.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
-        {errors.dropdownValue && <Text style={styles.errorText}>{errors.dropdownValue}</Text>}
+        {errors.radioButtonsValue && <Text style={styles.errorText}>{errors.radioButtonsValue}</Text>}
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitButtonText}>{t('SUBMIT')}</Text>
@@ -224,11 +211,11 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: -10,
+    right: 20,
   },
   closeIconText: {
-    fontSize: 24,
+    fontSize: 40,
     fontWeight: 'bold',
     color: '#333',
   },
@@ -244,7 +231,7 @@ const styles = StyleSheet.create({
     borderColor: '#2196F3',
     borderWidth: 1,
     borderRadius: 8,
-    marginBottom: 15,
+    marginBottom: 5,
     paddingHorizontal: 10,
     fontSize: 16,
   },
@@ -254,8 +241,10 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     fontSize: 12,
-    marginBottom: 10,
+    marginTop: 5,
+    marginBottom: 15,
     textAlign: 'left',
+    width: '100%',
   },
   dropdownLabel: {
     fontSize: 16,
@@ -263,16 +252,29 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#555',
   },
-  dropdown: {
+  radioGroup: {
     width: '100%',
     marginBottom: 20,
   },
-  dropdownStyle: {
-    height: 50,
+  radioButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
     borderColor: '#2196F3',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  radioButtonSelected: {
+    backgroundColor: '#2196F3',
+  },
+  radioButtonLabel: {
+    fontSize: 16,
+    color: '#555',
   },
   submitButton: {
     backgroundColor: '#2196F3',
