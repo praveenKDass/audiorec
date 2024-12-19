@@ -173,7 +173,7 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
         />
         {errors.phoneNumber && <Text style={styles.errorText}>{errors.phoneNumber}</Text>}
 
-        <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
+        <Text style={styles.dropdownLabel}>{t('SELECT_OPTION')}</Text>
         <View style={styles.radioGroup}>
           {radioButtonsData.map((button) => (
             <TouchableOpacity
