@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
   AppState,
+  LayoutAnimation,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +27,8 @@ import DNDModalComponent from '../../components/Modal/DNDModalComponent';
 import UploadAlert from '../../components/Modal/UploadModalComponent';
 import UserInformationModal from '../../components/Modal/userInformationModal';
 import MediaPlayer from '../../components/MediaPlayer/MediaPlayer';
+import { useTranslation } from 'react-i18next';
+import { Dropdown } from 'react-native-element-dropdown';
 
 const HomeScreen = () => {
   const [uploadModal, setuploadModal] = useState(false);
@@ -44,6 +47,16 @@ const HomeScreen = () => {
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState();
+  const [language, setLanguage] = useState({
+    label:"English",
+    value:'en'
+  });
+  const { t, i18n } = useTranslation();
+  const languages = [
+    { label: 'English', value: 'en' },
+    { label: 'Hindi', value: 'hi' },
+  ];
+
   useEffect(() => {
     // Check and request DND permission when the app starts
     if (Platform.OS === 'android') {
@@ -71,6 +84,24 @@ const HomeScreen = () => {
     return () => {
       subscription.remove(); // Clean up listener
     };
+  }, []);
+
+  useEffect(() => {
+    const loadLanguage = async () => {
+      const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
+      if (savedLanguage) {
+        i18n.changeLanguage(savedLanguage);
+        setLanguage({
+          label: savedLanguage === 'en' ? 'English' : 'Hindi',
+          value: savedLanguage,
+        });
+      } else {
+        i18n.changeLanguage('en');
+        setLanguage({ label: 'English', value: 'en' });
+      }
+    };
+
+    loadLanguage();
   }, []);
 
   const handleAppStateChange = nextAppState => {
@@ -109,15 +140,15 @@ const HomeScreen = () => {
           return true;
         } else {
           Alert.alert(
-            'Permissions Required',
-            'Please grant the required permissions to use this feature.',
+            t('PERMISSION_REQUIRED'),
+            t('PERMISSION_REQUIRED_MSG'),
             [
               {
-                text: 'OK',
+                text: t('OK'),
                 onPress: () => console.log('Permission denied'),
               },
               {
-                text: 'Go to Settings',
+                text: t('GO_TO_SETTINGS'),
                 onPress: () => Linking.openSettings(),
                 style: 'cancel',
               },
@@ -164,11 +195,16 @@ const HomeScreen = () => {
   const checkRecording = () => {
     setUserInformationModal(true);
   };
+  const changeLanguage = async (lang) => {
+    await i18n.changeLanguage(lang.value);  
+    setLanguage(lang);  
+    await AsyncStorage.setItem('selectedLanguage', JSON.parse(lang));
+  }
   // Start recording
   const startRecording = async () => {
     const granted = await requestPermission();
     if (!granted) {
-      Alert.alert('Microphone permission not granted');
+      Alert.alert(t('PERMISSION_MICROPHONE'));
       return;
     }
 
@@ -277,6 +313,23 @@ const HomeScreen = () => {
   return (
     <>
       <View style={styles.container}>
+        {/* Top section with text and button */}
+        <View style={styles.topSection}>
+          <Text style={styles.headerText}>{t('SHIKSHA_CHAUPAL')}</Text>
+          
+          <Dropdown
+            label={t('LANGUAGE')}
+            data={languages}
+            labelField="label"
+            valueField="value"
+            value={language.value}
+            onChange={item => changeLanguage(item)} 
+            style={styles.dropdown}
+            placeholder={t('SELECT_LANGUAGE')}
+        />
+        </View>
+
+        {/* FlatList or MediaPlayer based on state */}
         {!showMusicPlayer ? (
           <FlatList
             data={[...recordings]} // Add dummy data for non-list items
@@ -296,7 +349,7 @@ const HomeScreen = () => {
                 </View>
                 <View style={styles.buttonContainer}>
                   <Button
-                    title="Start Recording"
+                    title={t('START_RECORD')}
                     onPress={checkRecording}
                     disabled={isRecording}
                   />
@@ -306,17 +359,17 @@ const HomeScreen = () => {
                     onSubmit={handleUserInformationModalSubmit}
                   />
                   <Button
-                    title={isPaused ? 'Resume Recording' : 'Pause Recording'}
+                    title={isPaused ? t('RESUME_RECORD') : t('PAUSE_RECORD')}
                     onPress={togglePauseResume}
                     disabled={!isRecording}
                   />
                   <Button
-                    title="Stop Recording"
+                    title={t('STOP_RECORD')}
                     onPress={stopRecording}
                     disabled={!isRecording}
                   />
                   <Button
-                    title="Clear Recordings"
+                    title={t('CLEAR_RECORD')}
                     onPress={clearRecordings}
                     disabled={recordings.length === 0}
                   />
@@ -324,7 +377,7 @@ const HomeScreen = () => {
                 <View style={styles.currentDurationContainer}>
                   {isRecording && (
                     <Text>
-                      Recording Duration: {formatDuration(currentDuration)}
+                      {t('RECORD_DURATION')} {formatDuration(currentDuration)}
                     </Text>
                   )}
                 </View>
@@ -374,7 +427,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+  },
+  topSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 10,
+    paddingTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    zIndex: 10,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  dropdown: {
+    width: 150,
+    marginLeft: 10,
   },
   buttonContainer: {
     marginVertical: 10,
@@ -403,6 +477,7 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     marginTop: 20,
+    marginTop: 100, 
   },
   header: {
     fontSize: 18,
@@ -425,3 +500,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
