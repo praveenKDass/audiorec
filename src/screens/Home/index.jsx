@@ -9,15 +9,18 @@ import {
   Alert,
   Platform,
   Linking,
-  AppState ,
+  AppState,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
 import RNFS from 'react-native-fs';
-import { request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import { checkDNDPermission,setDNDMode} from '../../components/checkDNDPermission/checkDNDPermission';
+import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import {
+  checkDNDPermission,
+  setDNDMode,
+} from '../../components/checkDNDPermission/checkDNDPermission';
 import Card from '../../components/Card/Card';
 import DNDModalComponent from '../../components/Modal/DNDModalComponent';
 const HomeScreen = ({navigation}) => {
@@ -30,15 +33,15 @@ const HomeScreen = ({navigation}) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const durationInterval = useRef(null);
   const [appState, setAppState] = useState(AppState.currentState);
-   const [modal, setModal] = useState(false);
-   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [modal, setModal] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   useEffect(() => {
     // Check and request DND permission when the app starts
     if (Platform.OS === 'android') {
       checkDNDPermission().then(hasPermission => {
-        AsyncStorage.getItem("isDNDModalShow").then(checkDNDModalPermission => {
+        AsyncStorage.getItem('isDNDModalShow').then(checkDNDModalPermission => {
           let booleanValue = JSON.parse(checkDNDModalPermission);
-          if (!hasPermission && !booleanValue ) {
+          if (!hasPermission && !booleanValue) {
             setModal(true);
           }
         });
@@ -47,70 +50,70 @@ const HomeScreen = ({navigation}) => {
 
     // Initial check for DND mode on app startup
     if (appState === 'active') {
-      setDNDMode('PRIORITY_MODE'); 
+      setDNDMode('PRIORITY_MODE');
     }
 
-
     // Listen for app state changes
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
 
     return () => {
       subscription.remove(); // Clean up listener
     };
   }, []);
 
-
-  const handleAppStateChange = (nextAppState) => {
-    if (nextAppState === 'active') {        
-        setDNDMode('PRIORITY_MODE'); // Enable DND mode
+  const handleAppStateChange = nextAppState => {
+    if (nextAppState === 'active') {
+      setDNDMode('PRIORITY_MODE'); // Enable DND mode
     } else if (nextAppState === 'background' || nextAppState === 'inactive') {
-        
-        setDNDMode('NORMAL_MODE'); // Disable DND mode
+      setDNDMode('NORMAL_MODE'); // Disable DND mode
     }
     setAppState(nextAppState);
-};
+  };
 
-
-//above line for dnd mode
+  //above line for dnd mode
   // Request microphone permissions
   const requestPermission = async () => {
-   
-      if (Platform.OS === 'android') {
-        try {
-          const recordAudioPermission = PERMISSIONS.ANDROID.RECORD_AUDIO;
-          let fineLocation = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
+    if (Platform.OS === 'android') {
+      try {
+        const recordAudioPermission = PERMISSIONS.ANDROID.RECORD_AUDIO;
+        let fineLocation = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
 
-          // Request each permission individually
-          const fineLocationStaus = await request(fineLocation);
-          const recordAudioPermissionStatus = await request(recordAudioPermission);
-          if (
-            recordAudioPermissionStatus ===RESULTS.GRANTED &&
-            fineLocationStaus ===RESULTS.GRANTED 
-          ) {
-            return true;
-          } else {
-            Alert.alert(
-              'Permissions Required',
-              'Please grant the required permissions to use this feature.',
-              [
-                {
-                  text: 'OK',
-                  onPress: () => console.log('Permission denied'),
-                },
-                {
-                  text: 'Go to Settings',
-                  onPress: () => Linking.openSettings(),
-                  style: 'cancel',
-                },
-              ]
-            );          }
-        } catch (err) {
-          console.warn(err);
-          return;
+        // Request each permission individually
+        const fineLocationStaus = await request(fineLocation);
+        const recordAudioPermissionStatus = await request(
+          recordAudioPermission,
+        );
+        if (
+          recordAudioPermissionStatus === RESULTS.GRANTED &&
+          fineLocationStaus === RESULTS.GRANTED
+        ) {
+          return true;
+        } else {
+          Alert.alert(
+            'Permissions Required',
+            'Please grant the required permissions to use this feature.',
+            [
+              {
+                text: 'OK',
+                onPress: () => console.log('Permission denied'),
+              },
+              {
+                text: 'Go to Settings',
+                onPress: () => Linking.openSettings(),
+                style: 'cancel',
+              },
+            ],
+          );
         }
+      } catch (err) {
+        console.warn(err);
+        return;
       }
-    
-  }
+    }
+  };
 
   // Save recordings to local storage
   const saveRecordingsToStorage = async recordings => {
@@ -141,7 +144,6 @@ const HomeScreen = ({navigation}) => {
     };
     initializeRecordings();
   }, []);
-
 
   // Start recording
   const startRecording = async () => {
@@ -227,11 +229,13 @@ const HomeScreen = ({navigation}) => {
 
   // Format duration into mm:ss
   const formatDuration = seconds => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs
+  
+    return `${hrs.toString().padStart(2, '0')}:${mins
       .toString()
-      .padStart(2, '0')}`;
+      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const animatedStyle = {
@@ -252,56 +256,75 @@ const HomeScreen = ({navigation}) => {
   const clearRecordings = async () => {
     try {
       await AsyncStorage.clear();
-      setRecordings([])
+      setRecordings([]);
     } catch (error) {
       console.error('Failed to clear AsyncStorage:', error);
     }
   };
 
-
   return (
     <View style={styles.container}>
-      <View style={styles.animationContainer}>
-        <Animated.View style={[styles.circle, animatedStyle]} />
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Start Recording"
-          onPress={startRecording}
-          disabled={isRecording}
-        />
-        <Button
-          title={isPaused ? 'Resume Recording' : 'Pause Recording'}
-          onPress={togglePauseResume}
-          disabled={!isRecording}
-        />
-        <Button
-          title="Stop Recording"
-          onPress={stopRecording}
-          disabled={!isRecording}
-        />
-        <Button
-          title="Clear Recordings"
-          onPress={clearRecordings}
-          disabled={recordings.length === 0}
-        />
-      </View>
-      <View style={styles.currentDurationContainer}>
-        {isRecording && (
-          <Text>Recording Duration: {formatDuration(currentDuration)}</Text>
-        )}
-      </View>
-      <View style={styles.listContainer}>
-        <Text style={styles.header}>Recordings List:</Text>
-        <FlatList
-          data={recordings}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
-            <Card item={item} setRecordings={setRecordings} />
-          )}
-        />
-      </View>
-      <DNDModalComponent modal={modal} setModal={setModal} dontShowAgain={dontShowAgain} setDontShowAgain={setDontShowAgain}/>
+      <FlatList
+        data={[...recordings]} // Add dummy data for non-list items
+        keyExtractor={(item, index) =>
+          item.id ? item.id.toString() : `static-${index}`
+        }
+        ListHeaderComponent={
+          <>
+            <View style={styles.animationContainer}>
+              {isRecording ? (
+                <Text style={styles.animationText}>
+                  {formatDuration(currentDuration)}
+                </Text>
+              ) : (
+                <Text style={styles.animationText}>
+                  00:00:00
+                </Text>
+              )}
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Start Recording"
+                onPress={startRecording}
+                disabled={isRecording}
+              />
+              <Button
+                title={isPaused ? 'Resume Recording' : 'Pause Recording'}
+                onPress={togglePauseResume}
+                disabled={!isRecording}
+              />
+              <Button
+                title="Stop Recording"
+                onPress={stopRecording}
+                disabled={!isRecording}
+              />
+              <Button
+                title="Clear Recordings"
+                onPress={clearRecordings}
+                disabled={recordings.length === 0}
+              />
+            </View>
+            <View style={styles.currentDurationContainer}>
+              {isRecording && (
+                <Text>
+                  Recording Duration: {formatDuration(currentDuration)}
+                </Text>
+              )}
+            </View>
+          </>
+        }
+        renderItem={({item}) =>
+          item.id ? <Card item={item} setRecordings={setRecordings} /> : null
+        }
+        contentContainerStyle={styles.flatListContent}
+        showsVerticalScrollIndicator={false}
+      />
+      <DNDModalComponent
+        modal={modal}
+        setModal={setModal}
+        dontShowAgain={dontShowAgain}
+        setDontShowAgain={setDontShowAgain}
+      />
     </View>
   );
 };
@@ -321,13 +344,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   animationContainer: {
-    width: 200,
-    height: 200,
+    marginVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     alignSelf: 'center',
   },
+  animationText: {
+    fontSize: 50,
+    color:"#2196F3"
+  },
+
   circle: {
     width: 100,
     height: 100,
@@ -357,5 +384,4 @@ const styles = StyleSheet.create({
   recordingText: {
     fontSize: 16,
   },
-
 });

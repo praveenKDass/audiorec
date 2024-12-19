@@ -26,7 +26,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import BottomNavigation from './src/navigation/BottomNavigation';
 import {NavigationContainer} from '@react-navigation/native'
-
+import HomeScreen from './src/screens/Home';
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
