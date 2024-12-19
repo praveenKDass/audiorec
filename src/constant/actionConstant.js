@@ -1,7 +1,11 @@
-export const actions = [{
-    OPTIONS :{
-        a:"Celebrating if someone took some step after the first Chaupal towards preventing their girls' dropout.",
-        b:"Shared Seeing: Challenges that are preventing girls from continuing education till grade 12",
-        c:"Shared solving: Discussing and engaging in local problem solving for some of these challenges."
-    }
-}]
+export const ACTION_OPTIONS = {
+    OPTION_1: 'OPTIONS_1',
+    OPTION_2: 'OPTIONS_2',
+    OPTION_3: 'OPTIONS_3',
+};
+  
+export const OPTIONS = [
+    { id: ACTION_OPTIONS.OPTION_1, key: 'OPTIONS_1' },
+    { id: ACTION_OPTIONS.OPTION_2, key: 'OPTIONS_2' },
+    { id: ACTION_OPTIONS.OPTION_3, key: 'OPTIONS_3' },
+];
