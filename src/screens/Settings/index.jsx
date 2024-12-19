@@ -12,7 +12,6 @@ const Settings = () => {
   const { t, i18n } = useTranslation();
 
   const changeLanguage = (lang) => {
-    console.log("lang",lang)
     i18n.changeLanguage(lang)
   };
 

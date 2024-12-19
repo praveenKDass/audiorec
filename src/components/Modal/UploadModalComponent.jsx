@@ -26,7 +26,9 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
         'shikshachaupalrecording',
         JSON.stringify(updatedRecordings),
       );
+
       setRecordings(updatedRecordings);
+      Alert.alert("Success","Recording uploaded successfully")
     } catch (error) {
       console.error('Error upadteIsuploadKey item:', error);
       Alert.alert('Error', 'Failed to upadteIsuploadKey the Recording.');
@@ -57,17 +59,17 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
       let destinationPath = preSignedData.result.destFilePath;
       let uploadAudioFile = await audioService.uploadFile(
         signedUrl,
-        recordingPath.path,
+        recordingPath.path.split('/').pop(),
       );
       let reqBody = {
         name: userDetails.userName,
-        cloudPath: cloudPath,
+        cloud_upload_path: cloudPath,
         phone: userDetails.phoneNumber,
         location: userDetails.location,
-        type: userDetails.dropdownValue + 1,
+        type: (userDetails.dropdownValue + 1).toString(),
       };
       let createRecord = await audioService.createAudioRecord(reqBody);
-      if (createRecord.success && createRecord.status === 200) {
+      if (createRecord.responseCode === "OK") {
         await updateIsuploadKey(recordingPath);
       } else {
         Alert.alert(

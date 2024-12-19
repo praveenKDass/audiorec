@@ -69,7 +69,6 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
   const checkLocationServices = () => {
     Geolocation.getCurrentPosition(
       (position) => {
-        console.log('Position:', position);
         setLocation(position);
       },
       (error) => {
