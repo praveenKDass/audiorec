@@ -37,18 +37,19 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
   const handleUpload = async () => {
     try {
       // First check internet connectivity
-      const networkState = await NetInfo.fetch();
+      // const networkState = await NetInfo.fetch();
 
-      if (!networkState.isConnected) {
-        // Handle no internet case
-        Alert.alert(
-          t('OFFLINE'),
-          t('OFFLINE_MSG'),
-        );
-        return;
-      }
+      // if (!networkState.isConnected) {
+      //   // Handle no internet case
+      //   Alert.alert(
+      //     t('OFFLINE'),
+      //     t('OFFLINE_MSG'),
+      //   );
+      //   return;
+      // }
       let userDetails = await AsyncStorage.getItem('userDetails');
       userDetails = JSON.parse(userDetails);
+      console.log(userDetails);
       //  Get pre-signed URL
       const preSignedData = await audioService.getPreSignedUrl({
         fileName: recordingPath.path.split('/').pop(),
