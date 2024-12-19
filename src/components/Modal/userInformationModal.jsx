@@ -211,7 +211,7 @@ const UserInformationModal = ({isVisible, setIsVisible, onSubmit}) => {
             )}
           </View>
 
-          <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
+          <Text style={styles.dropdownLabel}>{t('SELECT_OPTION')}</Text>
           <View style={styles.checkboxGroup}>
             {checkboxData.map(option => (
               <TouchableOpacity
