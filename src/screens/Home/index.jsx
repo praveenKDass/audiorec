@@ -20,7 +20,13 @@ import { request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import { checkDNDPermission,setDNDMode} from '../../components/checkDNDPermission/checkDNDPermission';
 import Card from '../../components/Card/Card';
 import DNDModalComponent from '../../components/Modal/DNDModalComponent';
+import UploadAlert from '../../components/Modal/UploadModalComponent';
+import UserInformationModal from '../../components/Modal/userInformationModal';
+
 const HomeScreen = ({navigation}) => {
+  const [uploadModal, setuploadModal] = useState(false);
+  const [recordUpload,setRecordUpload] = useState();
+  const [userInformationModal, setUserInformationModal] = useState(false);
   const [audioRecorderPlayer] = useState(new AudioRecorderPlayer());
   const [recordingPath, setRecordingPath] = useState('');
   const [recordings, setRecordings] = useState([]);
@@ -70,6 +76,12 @@ const HomeScreen = ({navigation}) => {
     setAppState(nextAppState);
 };
 
+//on submited the userInformationModal 
+const handleUserInformationModalSubmit = (data) => {
+  console.log('Data received from modal:', data);
+  setUserInformationModal(false);
+  startRecording()
+};
 
 //above line for dnd mode
   // Request microphone permissions
@@ -142,43 +154,45 @@ const HomeScreen = ({navigation}) => {
     initializeRecordings();
   }, []);
 
-
+  const checkRecording = ()=>{
+    setUserInformationModal(true)
+  }
   // Start recording
   const startRecording = async () => {
-    const granted = await requestPermission();
-    if (!granted) {
-      Alert.alert('Microphone permission not granted');
-      return;
-    }
-
-    try {
-      const uniqueFileName = `recording_${Date.now()}_${uuidv4()}.mp3`;
-      const recordingPath = Platform.select({
-        ios: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
-        android: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
-      });
-      const result = await audioRecorderPlayer.startRecorder(recordingPath);
-      setRecordingPath(result);
-      setIsRecording(true);
-      setIsPaused(false);
-      setCurrentDuration(0);
-      durationInterval.current = setInterval(() => {
-        setCurrentDuration(prev => prev + 1);
-      }, 1000);
-
-      audioRecorderPlayer.addRecordBackListener(e => {
-        const amplitude = e.currentMetering || 0;
-        const normalizedAmplitude =
-          Math.max(0, Math.min(amplitude + 160, 160)) / 160;
-        Animated.spring(animatedValue, {
-          toValue: normalizedAmplitude,
-          useNativeDriver: true,
-          speed: 20,
-        }).start();
-      });
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-    }
+      const granted = await requestPermission();
+      if (!granted) {
+        Alert.alert('Microphone permission not granted');
+        return;
+      }
+  
+      try {
+        const uniqueFileName = `recording_${Date.now()}_${uuidv4()}.mp3`;
+        const recordingPath = Platform.select({
+          ios: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
+          android: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
+        });
+        const result = await audioRecorderPlayer.startRecorder(recordingPath);
+        setRecordingPath(result);
+        setIsRecording(true);
+        setIsPaused(false);
+        setCurrentDuration(0);
+        durationInterval.current = setInterval(() => {
+          setCurrentDuration(prev => prev + 1);
+        }, 1000);
+  
+        audioRecorderPlayer.addRecordBackListener(e => {
+          const amplitude = e.currentMetering || 0;
+          const normalizedAmplitude =
+            Math.max(0, Math.min(amplitude + 160, 160)) / 160;
+          Animated.spring(animatedValue, {
+            toValue: normalizedAmplitude,
+            useNativeDriver: true,
+            speed: 20,
+          }).start();
+        });
+      } catch (error) {
+        console.error('Failed to start recording:', error);
+      }
   };
 
   // Stop recording
@@ -197,9 +211,11 @@ const HomeScreen = ({navigation}) => {
         duration: formatDuration(currentDuration),
         isUploaded: false,
       };
+      setRecordUpload(newRecording)
       const updatedRecordings = [...recordings, newRecording];
       setRecordings(updatedRecordings);
       await saveRecordingsToStorage(updatedRecordings);
+      await setuploadModal(true)
       Animated.spring(animatedValue, {
         toValue: 0,
         useNativeDriver: true,
@@ -267,9 +283,14 @@ const HomeScreen = ({navigation}) => {
       <View style={styles.buttonContainer}>
         <Button
           title="Start Recording"
-          onPress={startRecording}
+          onPress={checkRecording}
           disabled={isRecording}
         />
+        <UserInformationModal
+        isVisible={userInformationModal}
+        setIsVisible={setUserInformationModal}
+        onSubmit={handleUserInformationModalSubmit}
+      />
         <Button
           title={isPaused ? 'Resume Recording' : 'Pause Recording'}
           onPress={togglePauseResume}
@@ -285,6 +306,12 @@ const HomeScreen = ({navigation}) => {
           onPress={clearRecordings}
           disabled={recordings.length === 0}
         />
+        <UploadAlert
+        visible={uploadModal}
+        onClose={() => setuploadModal(false)}
+        recordingPath={recordUpload}
+        setRecordings={setRecordings}
+      />
       </View>
       <View style={styles.currentDurationContainer}>
         {isRecording && (
