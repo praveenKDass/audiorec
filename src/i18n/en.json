@@ -11,7 +11,7 @@
     "RECORD_ID":"Recording ID :",
     "DURATION":"Duration:",
     "PLAY":"Play",
-    "UPLOAD_SUCCESS":"Upload Success",
+    "UPLOAD_SUCCESS":"Uploaded",
     "UPLOAD":"Upload",
     "PERMISSION_CHECK_ERROR_TITLE": "Permission Check Error",
     "PERMISSION_CHECK_ERROR_MSG": "An error occurred while checking Do Not Disturb permissions. Please try again later.",

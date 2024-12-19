@@ -44,6 +44,7 @@ const HomeScreen = () => {
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState();
+
   useEffect(() => {
     // Check and request DND permission when the app starts
     if (Platform.OS === 'android') {
@@ -84,7 +85,6 @@ const HomeScreen = () => {
 
   //on submited the userInformationModal
   const handleUserInformationModalSubmit = data => {
-    console.log('Data received from modal:', data);
     setUserInformationModal(false);
     startRecording();
   };
@@ -314,24 +314,21 @@ const HomeScreen = () => {
                     title="Stop Recording"
                     onPress={stopRecording}
                     disabled={!isRecording}
-                  />
-                  <Button
+                    color="#F44336"
+                    />
+                  {/* <Button
                     title="Clear Recordings"
                     onPress={clearRecordings}
                     disabled={recordings.length === 0}
-                  />
+                  /> */}
                 </View>
                 <View style={styles.currentDurationContainer}>
-                  {isRecording && (
-                    <Text>
-                      Recording Duration: {formatDuration(currentDuration)}
-                    </Text>
-                  )}
+                <Text style={styles.listingtitle}>My Recordings:</Text>               
                 </View>
               </>
             }
             renderItem={({item}) =>
-              item.id ? (
+               item.id ? (
                 <Card
                   item={item}
                   setRecordings={setRecordings}
@@ -397,7 +394,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff5722',
   },
   currentDurationContainer: {
-    alignItems: 'center',
+    alignItems: 'left',
     marginVertical: 10,
   },
   listContainer: {
@@ -424,4 +421,9 @@ const styles = StyleSheet.create({
     color: '#2196F3',
     fontWeight: 'bold',
   },
+  listingtitle:{
+    fontSize: 20,
+    color: '#2196F3',
+    fontWeight: 'bold',
+  }
 });

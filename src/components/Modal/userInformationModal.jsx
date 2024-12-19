@@ -149,14 +149,14 @@ const UserInformationModal = ({ isVisible, setIsVisible, onSubmit }) => {
 
         <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
         <View style={styles.dropdown}>
-          {Object.entries(options).map(([key, value]) => (
+          {Object.entries(options).map(([key, value],index) => (
             <TouchableOpacity
               key={key}
               style={[
                 styles.dropdownItem,
-                formData.dropdownValue === value && styles.selectedItem,
+                formData.dropdownValue === index && styles.selectedItem,
               ]}
-              onPress={() => handleInputChange('dropdownValue', value)}
+              onPress={() => handleInputChange('dropdownValue', index)}
             >
               <Text style={styles.dropdownText}>{value}</Text>
             </TouchableOpacity>
