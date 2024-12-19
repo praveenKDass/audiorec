@@ -29,8 +29,10 @@ import UserInformationModal from '../../components/Modal/userInformationModal';
 import MediaPlayer from '../../components/MediaPlayer/MediaPlayer';
 import { useTranslation } from 'react-i18next';
 import { Dropdown } from 'react-native-element-dropdown';
+import { useKeepAwake } from '@sayem314/react-native-keep-awake';
 
 const HomeScreen = () => {
+  useKeepAwake()
   const [uploadModal, setuploadModal] = useState(false);
   const [recordUpload, setRecordUpload] = useState();
   const [userInformationModal, setUserInformationModal] = useState(false);
@@ -186,6 +188,7 @@ const HomeScreen = () => {
   useEffect(() => {
     const initializeRecordings = async () => {
       const storedRecordings = await loadRecordingsFromStorage();
+      storedRecordings.reverse()
       setRecordings(storedRecordings);
     };
     initializeRecordings();
@@ -255,6 +258,7 @@ const HomeScreen = () => {
       };
       setRecordUpload(newRecording);
       const updatedRecordings = [...recordings, newRecording];
+      updatedRecordings.reverse()
       setRecordings(updatedRecordings);
       await saveRecordingsToStorage(updatedRecordings);
       await setuploadModal(true);
