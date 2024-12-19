@@ -1,10 +1,10 @@
 import { NativeModules, Platform,Alert } from 'react-native';
 const { DNDManagerModule } = NativeModules;
-
-
+import { useTranslation } from 'react-i18next';
 
 // Function to check and request DND permissions
 export const checkDNDPermission = async () => {
+  const { t } = useTranslation();
   if (Platform.OS !== 'android') return;
   try {
     const hasPermission = await DNDManagerModule.checkPermission();
@@ -12,8 +12,8 @@ export const checkDNDPermission = async () => {
   } catch (error) {
     console.error('Error checking permission:', error);
     Alert.alert(
-      'Permission Check Error',
-      'An error occurred while checking Do Not Disturb permissions. Please try again later.'
+      t('PERMISSION_CHECK_ERROR_TITLE'),
+      t('PERMISSION_CHECK_ERROR_MSG')
     );
   }
 };

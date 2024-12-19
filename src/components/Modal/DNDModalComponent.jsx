@@ -10,6 +10,7 @@ import {
   Button
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 const { DNDManagerModule } = NativeModules;
 
@@ -20,6 +21,7 @@ export const DNDModalComponent = ({
   dontShowAgain,
   setDontShowAgain,
 }) => {
+  const { t } = useTranslation();
   const handleEnable = async () => {
     try {
       await DNDManagerModule.requestPermission();
@@ -27,8 +29,8 @@ export const DNDModalComponent = ({
     } catch (error) {
       console.error('Error requesting permission:', error);
       Alert.alert(
-        'Permission Error',
-        'Could not enable Do Not Disturb mode. Please check your device settings.',
+        t('ENABLE_DND'),
+        t('PERMISSION_ERROR')
       );
     }
   };
@@ -64,17 +66,14 @@ export const DNDModalComponent = ({
               borderRadius: 10,
             }}
           >
-            <Text>Enable Do Not Disturb</Text>
-            <Text >
-              Recording might be disturbed by calls and notifications. For
-              better performance, please enable Do Not Disturb mode.
-            </Text>
+            <Text>{t('ENABLE_DND')}</Text>
+            <Text >{t('MODAL_DESCRIPTION')}</Text>
             <TouchableOpacity style={{marginVertical:5}}>
-            <Text onPress={handleOnPress}>Don't show this again</Text>
+            <Text onPress={handleOnPress}>{t('DONT_SHOW_AGAIN')}</Text>
             </TouchableOpacity>
-            <Button title="Enable" onPress={handleEnable}>
+            <Button title={t('ENABLE')} onPress={handleEnable}>
 =            </Button>
-            <Button title='Cancel' onPress={handleCancel}>
+            <Button title={t('CANCEL')} onPress={handleCancel}>
 =            </Button>
           </View>
         </View>

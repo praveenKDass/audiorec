@@ -1,25 +1,29 @@
 import {StyleSheet, Text, View,Button} from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import UploadAlert from '../Modal/UploadModalComponent';
+import { useTranslation } from 'react-i18next';
 const Card = ({item,setRecordings}) => {
+  const [uploadModal, setuploadModal] = useState(false);
 const navigation = useNavigation()
+const { t } = useTranslation();
 //Function to delete the recording from the local storage
 const deleteRecording = async (recording) => {
   let id = recording.id
   Alert.alert(
-    'Confirm Delete',
+    t('CONFIRM_DELETE'),
     recording.isUploaded
-    ? 'Are you sure you want to delete this recording?'
-    : 'This recording has not been uploaded yet. Are you sure you want to delete it?',
+    ? t('CONFIRM_DELETE_SUCCESS_MSG')
+    : t('CONFIRM_DETELE_FAIL_MSG'),
     [
       {
-        text: 'Cancel',
+        text: t('CANCEL'),
         style: 'cancel',
       },
       {
-        text: 'Delete',
+        text: t('DELETE'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -31,10 +35,10 @@ const deleteRecording = async (recording) => {
             // Save updated list back to AsyncStorage
             await AsyncStorage.setItem('shikshachaupalrecording', JSON.stringify(updatedRecordings));
             setRecordings(updatedRecordings)
-            Alert.alert('Success', `Recording with id '${id}' has been deleted.`);
+            Alert.alert(t('SUCCESS_DELETE'));
           } catch (error) {
             console.error('Error removing item:', error);
-            Alert.alert('Error', 'Failed to delete the Recording.');
+            Alert.alert(t('ERROR_DETELE'));
           }
         },
       },
@@ -44,19 +48,49 @@ const deleteRecording = async (recording) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.recordingItem}>
-        <Text style={styles.recordingText}>
-          Recording {item.id} - {item.duration}
-        </Text>
+      <View style={styles.card}>
+        <View style={styles.infoContainer}>
+          <Text style={styles.recordingText}>
+          {t('RECORD_ID')} {item.id}
+          </Text>
+          <Text style={styles.durationText}>
+          {t('DURATION')}{item.duration}
+          </Text>
+        </View>
+
         <View style={styles.buttonContainer}>
-          <Button
-            title="Play"
-            onPress={() => navigation.navigate('Audio', {data: item})}
-          />
-          <Button
-            title="Delete"
-            onPress={()=>deleteRecording(item)}
-          />
+          <View style={styles.buttonWrapper}>
+            <Button
+              title={t('PLAY')}
+              onPress={() => navigation.navigate('Audio', { data: item })}
+            />
+          </View>
+          <View style={styles.buttonWrapper}>
+            <Button
+              title={t('DELETE')}
+              color="#F44336"
+              onPress={()=>deleteRecording(item)}
+            />
+          </View>
+          {item.isUploaded ? (
+            <View style={styles.uploadSuccessContainer}>
+              <Text style={styles.uploadSuccessText}>{t('UPLOAD_SUCCESS')}</Text>
+            </View>
+          ) : (
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={t('UPLOAD')}
+                color="#4CAF50"
+                onPress={() => setuploadModal(true)}
+              />
+            </View>
+          )}
+           <UploadAlert
+          visible={uploadModal}
+          onClose={() => setuploadModal(false)}
+          recordingPath={item}
+          setRecordings={setRecordings}
+        />
         </View>
       </View>
     </View>
@@ -67,23 +101,51 @@ export default Card;
 
 const styles = StyleSheet.create({
   container:{
-    borderRadius:10,
-    alignItems: "center",
-    gap:5,
-    justifyContent: "center",
-    backgroundColor: 'rgba(161, 241, 217, 0.5)', // White with 50% transparency
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    marginVertical:5
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  recordingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 5,
-    alignItems: 'center',
+  card:{
+    backgroundColor: 'rgba(240, 248, 255, 0.9)',
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    padding: 15,
+    marginBottom: 10,
+  },
+  infoContainer: {
+    marginBottom: 10,
   },
   recordingText: {
     fontSize: 16,
-    color:"red",
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  durationText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginRight: 5,
+    justifyContent: 'center',
+  },
+  uploadSuccessContainer: {
+    flex: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  uploadSuccessText: {
+    color: 'green',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
