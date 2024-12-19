@@ -48,6 +48,7 @@ function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   sectionContainer: {
     flex: 1,
+    backgroundColor: 'white',
   },
   sectionTitle: {
     fontSize: 24,

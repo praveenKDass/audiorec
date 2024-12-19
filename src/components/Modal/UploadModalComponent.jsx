@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{ useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from 'react-i18next';
@@ -14,6 +15,7 @@ import {audioService} from '../../services/api/audioService';
 
 const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
   const {t} = useTranslation();
+  const [loading, setLoading] = useState(false);
   const updateIsuploadKey = async data => {
     try {
       const recordings = await AsyncStorage.getItem('shikshachaupalrecording');
@@ -35,6 +37,7 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
   };
 
   const handleUpload = async () => {
+    setLoading(true);
     try {
       // First check internet connectivity
       // const networkState = await NetInfo.fetch();
@@ -81,6 +84,7 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
     } catch (error) {
       console.error('Upload failed:', error);
     }
+    setLoading(false);
     onClose();
   };
 
@@ -93,10 +97,14 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
       <View style={styles.modalContainer}>
         <View style={styles.alertBox}>
           <Text style={styles.titleText}>{t('UPLOAD_EVIDENCE_RECORDING')}</Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.buttonText}>{t('CANCEL')}</Text>
-            </TouchableOpacity>
+          {/* Show loader when uploading */}
+          {loading ? (
+            <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+          ) : (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                <Text style={styles.buttonText}>{t('CANCEL')}</Text>
+              </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.uploadButton}
@@ -104,6 +112,7 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
               <Text style={styles.buttonText}>{t('UPLOAD')}</Text>
             </TouchableOpacity>
           </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -157,5 +166,8 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  loader: {
+    marginBottom: 20,
   },
 });
