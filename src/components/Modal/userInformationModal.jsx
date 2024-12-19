@@ -184,18 +184,14 @@ const UserInformationModal = ({isVisible, setIsVisible, onSubmit}) => {
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{t('USER_INFORMATION')}</Text>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[styles.input, errors.userName && styles.inputError]}
-              placeholder={t('ENTER_YOUR_NAME')}
-              placeholderTextColor="#666"
-              value={formData.userName}
-              onChangeText={text => handleInputChange('userName', text)}
-            />
-            {errors.userName && (
-              <Text style={styles.errorText}>{errors.userName}</Text>
-            )}
-          </View>
+        <TextInput
+          style={[styles.input, errors.userName && styles.inputError]}
+          placeholder={t('ENTER_YOUR_NAME')}
+          placeholderTextColor="#666"
+          value={formData.userName}
+          onChangeText={(text) => handleInputChange('userName', text)}
+        />
+        {errors.userName && <Text style={styles.errorText}>{errors.userName}</Text>}
 
           <View style={styles.inputContainer}>
             <TextInput
@@ -211,31 +207,25 @@ const UserInformationModal = ({isVisible, setIsVisible, onSubmit}) => {
             )}
           </View>
 
-          <Text style={styles.dropdownLabel}>{t('SELECT_AN_OPTION')}</Text>
-          <View style={styles.checkboxGroup}>
-            {checkboxData.map(option => (
-              <TouchableOpacity
-                key={option.id}
-                style={styles.checkboxContainer}
-                onPress={() => toggleOption(option.value)}>
-                <View style={styles.checkboxWrapper}>
-                  <View
-                    style={[
-                      styles.checkbox,
-                      option.selected && styles.checkboxSelected,
-                    ]}>
-                    {option.selected && <Text style={styles.checkmark}>✓</Text>}
-                  </View>
-                </View>
-                <View style={styles.labelContainer}>
-                  <Text style={styles.checkboxLabel}>{option.label}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-          {errors.selectedOptions && (
-            <Text style={styles.errorText}>{errors.selectedOptions}</Text>
-          )}
+        <Text style={styles.dropdownLabel}>{t('SELECT_OPTION')}</Text>
+        <View style={styles.radioGroup}>
+          {radioButtonsData.map((button) => (
+            <TouchableOpacity
+              key={button.id}
+              style={styles.radioButtonContainer}
+              onPress={() => handleInputChange('radioButtonsValue', button.value)}
+            >
+              <View
+                style={[
+                  styles.radioButton,
+                  button.selected && styles.radioButtonSelected,
+                ]}
+              />
+              <Text style={styles.radioButtonLabel}>{button.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {errors.radioButtonsValue && <Text style={styles.errorText}>{errors.radioButtonsValue}</Text>}
 
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>{t('START_RECORD')}</Text>
