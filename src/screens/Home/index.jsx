@@ -30,6 +30,7 @@ import MediaPlayer from '../../components/MediaPlayer/MediaPlayer';
 import { useTranslation } from 'react-i18next';
 import { Dropdown } from 'react-native-element-dropdown';
 import { useKeepAwake } from '@sayem314/react-native-keep-awake';
+import { sortRecordings } from '../../services/utils/utils';
 
 const HomeScreen = () => {
   useKeepAwake()
@@ -188,8 +189,8 @@ const HomeScreen = () => {
   useEffect(() => {
     const initializeRecordings = async () => {
       const storedRecordings = await loadRecordingsFromStorage();
-      storedRecordings.reverse()
-      setRecordings(storedRecordings);
+      let sortRecord = await sortRecordings(storedRecordings)
+      setRecordings(sortRecord);
     };
     initializeRecordings();
   }, []);
@@ -258,9 +259,9 @@ const HomeScreen = () => {
       };
       setRecordUpload(newRecording);
       const updatedRecordings = [...recordings, newRecording];
-      updatedRecordings.reverse()
-      setRecordings(updatedRecordings);
-      await saveRecordingsToStorage(updatedRecordings);
+      let sortRecord = await sortRecordings(updatedRecordings)
+      setRecordings(sortRecord);
+      await saveRecordingsToStorage(sortRecord);
       await setuploadModal(true);
     } catch (error) {
       console.error('Failed to stop recording:', error);

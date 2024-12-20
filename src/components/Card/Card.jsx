@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import UploadAlert from '../Modal/UploadModalComponent';
 import { useTranslation } from 'react-i18next';
+import { sortRecordings } from '../../services/utils/utils';
 const Card = ({item,setRecordings,setSelectedMusic,setShowMusicPlayer}) => {
 const [uploadModal, setuploadModal] = useState(false);
 // const navigation = useNavigation()
@@ -32,9 +33,10 @@ const deleteRecording = async (recording) => {
             const parsedItems = recordings ? JSON.parse(recordings) : [];
             // Filter out the recordings to be deleted
             let updatedRecordings = parsedItems.filter((item) => item.id !== id);
+            let sortRecord = sortRecordings(updatedRecordings)
             // Save updated list back to AsyncStorage
-            await AsyncStorage.setItem('shikshachaupalrecording', JSON.stringify(updatedRecordings));
-            setRecordings(updatedRecordings)
+            await AsyncStorage.setItem('shikshachaupalrecording', JSON.stringify(sortRecord));
+            setRecordings(sortRecord)
             setSelectedMusic()
             Alert.alert(t('SUCCESS_DELETE'));
           } catch (error) {
