@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from 'react-i18next';
-import NetInfo from '@react-native-community/netinfo';
+// import NetInfo from '@react-native-community/netinfo';
 import {audioService} from '../../services/api/audioService';
+import { sortRecordings } from '../../services/utils/utils';
 
 const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
   const {t} = useTranslation();
@@ -23,13 +24,15 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
       let updatedRecordings = parsedItems.map(item =>
         item.id === data.id ? {...item, isUploaded: true} : item,
       );
+      let sortRecord = sortRecordings(updatedRecordings)
+      console.log(sortRecord,'sortRecord')
       await AsyncStorage.setItem(
         'shikshachaupalrecording',
-        JSON.stringify(updatedRecordings),
+        JSON.stringify(sortRecord),
       );
 
-      setRecordings(updatedRecordings);
-      Alert.alert("Success","Recording uploaded successfully")
+      setRecordings(sortRecord);
+      Alert.alert(t('SUCCESS'),t('SUCCESS_UPLOAD_RECORD'))
     } catch (error) {
       console.error('Error upadteIsuploadKey item:', error);
       Alert.alert('Error', t('RECORD_UPLOAD_FAIL_MSG'));

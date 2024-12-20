@@ -60,5 +60,7 @@
   "OPTIONS_1": "Celebrating: If someone took a step after the first Chaupal towards preventing their girls' dropout.",
   "OPTIONS_2": "Shared Seeing: Challenges preventing girls from continuing education until grade 12.",
   "OPTIONS_3": "Shared Solving: Discussing and engaging in local problem-solving for these challenges.",
-  "SELECT_OPTION": "What was discussed in the Shiksha Chaupal meeting?"
+  "SELECT_OPTION": "What was discussed in the Shiksha Chaupal meeting?",
+  "SUCCESS_UPLOAD_RECORD":"Recording uploaded successfully",
+  "SUCCESS":"Success"
 }
