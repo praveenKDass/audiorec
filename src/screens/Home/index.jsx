@@ -11,6 +11,7 @@ import {
   Linking,
   AppState,
   LayoutAnimation,
+  BackHandler,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -64,6 +65,40 @@ const HomeScreen = () => {
     {label: 'English', value: 'en'},
     {label: 'Hindi', value: 'hi'},
   ];
+  useEffect(() => {
+    const backAction = () => {
+      if (isRecording) {
+        Alert.alert(
+          'Exit Recording?',
+          'If you exit, the recording will stop. Do you want to proceed?',
+          [
+            {
+              text: 'Cancel',
+              onPress: () => null,
+              style: 'cancel',
+            },
+            {
+              text: 'Stop and Exit',
+              onPress: () => {
+                stopRecording(); // Call stopRecording function
+                BackHandler.exitApp(); // Exit the app
+              },
+            },
+          ],
+          {cancelable: true},
+        );
+        return true; // Prevent default back button behavior
+      }
+      return false; // Allow default back button behavior if not recording
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove(); // Cleanup listener
+  }, [isRecording]); // Depend on `isRecording`
 
   useEffect(() => {
     // Check and request DND permission when the app starts
