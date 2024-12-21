@@ -3,14 +3,15 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
+  TouchableOpacity,
   FlatList,
   Animated,
   Alert,
   Platform,
   Linking,
   AppState,
-  LayoutAnimation,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,7 +29,6 @@ import UploadAlert from '../../components/Modal/UploadModalComponent';
 import UserInformationModal from '../../components/Modal/userInformationModal';
 import MediaPlayer from '../../components/MediaPlayer/MediaPlayer';
 import {useTranslation} from 'react-i18next';
-import {Dropdown} from 'react-native-element-dropdown';
 import {useKeepAwake} from '@sayem314/react-native-keep-awake';
 import {sortRecordings} from '../../services/utils/utils';
 import notifee, {AndroidImportance} from '@notifee/react-native';
@@ -62,7 +62,7 @@ const HomeScreen = () => {
   const {t, i18n} = useTranslation();
   const languages = [
     {label: 'English', value: 'en'},
-    {label: 'Hindi', value: 'hi'},
+    {label: 'हिंदी', value: 'hi'},
   ];
 
   useEffect(() => {
@@ -333,89 +333,115 @@ const HomeScreen = () => {
     }
   };
 
-  return (
-    <>
-      <View style={styles.container}>
-        {/* Top section with text and button */}
-        <View style={styles.topSection}>
-          <Text style={styles.headerText}>{t('SHIKSHA_CHAUPAL')}</Text>
+  const RecordButton = ({onPress, disabled, label, color, width = 'auto'}) => (
+    <TouchableOpacity
+      style={[
+        styles.recordButton,
+        {backgroundColor: color, width},
+        disabled && styles.disabledButton,
+      ]}
+      onPress={onPress}
+      disabled={disabled}>
+      <Text style={styles.recordButtonText}>{label}</Text>
+    </TouchableOpacity>
+  );
 
-          <Dropdown
-            label={t('LANGUAGE')}
-            data={languages}
-            labelField="label"
-            valueField="value"
-            value={language.value}
-            onChange={item => changeLanguage(item)}
-            style={styles.dropdown}
-            placeholder={t('SELECT_LANGUAGE')}
-          />
+  const LanguageOption = ({label, selected, onPress}) => (
+    <TouchableOpacity
+      style={[styles.languageOption, selected && styles.selectedLanguage]}
+      onPress={onPress}>
+      <Text
+        style={[styles.languageText, selected && styles.selectedLanguageText]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>{t('SHIKSHA_CHAUPAL')}</Text>
+          <View style={styles.languageContainer}>
+            {languages.map(lang => (
+              <LanguageOption
+                key={lang.value}
+                label={lang.label}
+                selected={language.value === lang.value}
+                onPress={() => changeLanguage(lang)}
+              />
+            ))}
+          </View>
         </View>
 
-        {/* FlatList or MediaPlayer based on state */}
         {!showMusicPlayer ? (
           <FlatList
-            data={[...recordings]} // Add dummy data for non-list items
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : `static-${index}`
-            }
+            data={recordings}
+            keyExtractor={item => item.id?.toString() || `static-${item.path}`}
             ListHeaderComponent={
-              <>
-                <View style={styles.animationContainer}>
-                  {isRecording ? (
-                    <Text style={styles.animationText}>
-                      {formatDuration(currentDuration)}
-                    </Text>
-                  ) : (
-                    <Text style={styles.animationText}>00:00:00</Text>
+              <View style={styles.recordingSection}>
+                <View style={styles.timerContainer}>
+                  <Text style={styles.timerText}>
+                    {isRecording ? formatDuration(currentDuration) : '00:00:00'}
+                  </Text>
+                  {isRecording && (
+                    <Animated.View
+                      style={[
+                        styles.recordingIndicator,
+                        {
+                          transform: [
+                            {
+                              scale: animatedValue.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.3],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
                   )}
                 </View>
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title={t('START_RECORD')}
+
+                <View style={styles.controlsContainer}>
+                  <RecordButton
                     onPress={checkRecording}
                     disabled={isRecording}
+                    label={t('START_RECORD')}
+                    color="#FF4444"
+                    width={100}
                   />
-                  <UserInformationModal
-                    isVisible={userInformationModal}
-                    setIsVisible={setUserInformationModal}
-                    onSubmit={handleUserInformationModalSubmit}
-                  />
-                  <Button
-                    title={isPaused ? t('RESUME_RECORD') : t('PAUSE_RECORD')}
+                  <RecordButton
                     onPress={togglePauseResume}
                     disabled={!isRecording}
+                    label={isPaused ? t('RESUME_RECORD') : t('PAUSE_RECORD')}
+                    color="#2196F3"
+                    width={100}
                   />
-                  <Button
-                    title={t('STOP_RECORD')}
+                  <RecordButton
                     onPress={stopRecording}
                     disabled={!isRecording}
-                    color="#F44336"
+                    label={t('STOP_RECORD')}
+                    color="#4CAF50"
+                    width={100}
                   />
-                  {/* <Button
-                    title="Clear Recordings"
-                    onPress={clearRecordings}
-                    disabled={recordings.length === 0}
-                  />  */}
                 </View>
+
                 {recordings.length > 0 && (
-                  <View style={styles.currentDurationContainer}>
-                    <Text style={styles.listingtitle}>{t('MY_RECORD')}</Text>
-                  </View>
+                  <Text style={styles.sectionTitle}>{t('MY_RECORD')}</Text>
                 )}
-              </>
+              </View>
             }
-            renderItem={({item}) =>
-              item.id ? (
-                <Card
-                  item={item}
-                  setRecordings={setRecordings}
-                  setSelectedMusic={setSelectedMusic}
-                  setShowMusicPlayer={setShowMusicPlayer}
-                />
-              ) : null
-            }
-            contentContainerStyle={styles.flatListContent}
+            renderItem={({item}) => (
+              <Card
+                item={item}
+                setRecordings={setRecordings}
+                setSelectedMusic={setSelectedMusic}
+                setShowMusicPlayer={setShowMusicPlayer}
+              />
+            )}
+            contentContainerStyle={styles.recordingsList}
             showsVerticalScrollIndicator={false}
           />
         ) : (
@@ -427,6 +453,7 @@ const HomeScreen = () => {
           />
         )}
       </View>
+
       <DNDModalComponent
         modal={modal}
         setModal={setModal}
@@ -439,91 +466,117 @@ const HomeScreen = () => {
         recordingPath={recordUpload}
         setRecordings={setRecordings}
       />
-    </>
+      <UserInformationModal
+        isVisible={userInformationModal}
+        setIsVisible={setUserInformationModal}
+        onSubmit={handleUserInformationModalSubmit}
+      />
+    </SafeAreaView>
   );
 };
 
-export default HomeScreen;
-
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'flex-start',
   },
-  topSection: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 10,
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    zIndex: 10,
-    height: 60,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#1a1a1a',
   },
-  dropdown: {
-    width: 150,
-    marginLeft: 10,
+  languageContainer: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  buttonContainer: {
-    marginVertical: 10,
-    gap: 10,
-    flexDirection: 'column',
-    justifyContent: 'space-around',
+  languageOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
   },
-  animationContainer: {
-    width: '100%',
-    height: 200,
+  selectedLanguage: {
+    backgroundColor: '#2196F3',
+  },
+  languageText: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  selectedLanguageText: {
+    color: '#ffffff',
+  },
+  recordingSection: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+  },
+  timerContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  timerText: {
+    fontSize: 48,
+    fontWeight: '600',
+    color: '#2196F3',
+    fontVariant: ['tabular-nums'],
+  },
+  recordingIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF4444',
+    marginTop: 8,
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 32,
+  },
+  recordButton: {
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    alignSelf: 'center',
+    elevation: 4,
+    shadowColor: '#000000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  circle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ff5722',
-  },
-  currentDurationContainer: {
-    alignItems: 'left',
-    marginVertical: 10,
-  },
-  listContainer: {
-    flex: 1,
-    marginTop: 20,
-    marginTop: 100,
-  },
-  header: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  recordButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
     textAlign: 'center',
+    paddingHorizontal: 12,
   },
-  recordingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 5,
-    alignItems: 'center',
+  disabledButton: {
+    opacity: 0.5,
   },
-  recordingText: {
-    fontSize: 16,
-  },
-  animationText: {
-    fontSize: 50,
-    color: '#2196F3',
-    fontWeight: 'bold',
-  },
-  listingtitle: {
+  sectionTitle: {
     fontSize: 20,
-    color: '#2196F3',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  recordingsList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
 });
+
+export default HomeScreen;
