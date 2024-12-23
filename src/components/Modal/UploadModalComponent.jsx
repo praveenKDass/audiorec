@@ -13,9 +13,11 @@ import {useTranslation} from 'react-i18next';
 // import NetInfo from '@react-native-community/netinfo';
 import {audioService} from '../../services/api/audioService';
 import { sortRecordings } from '../../services/utils/utils';
+import useNetworkStatus from '../../customHooks/networkStatus';
 
 const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
   const {t} = useTranslation();
+  const isOnline = useNetworkStatus();
   const [loading, setLoading] = useState(false);
   const updateIsuploadKey = async data => {
     try {
@@ -44,15 +46,17 @@ const UploadAlert = ({visible, onClose, recordingPath, setRecordings}) => {
     try {
       // First check internet connectivity
       // const networkState = await NetInfo.fetch();
-      // console.log(networkState,"Status")
-      // if (!networkState.isConnected) {
-      //   // Handle no internet case
-      //   Alert.alert(
-      //     t('OFFLINE'),
-      //     t('OFFLINE_MSG'),
-      //   );
-      //   return ;
-      // }
+      console.log(isOnline,"Status")
+      if (!isOnline) {
+        // Handle no internet case
+        Alert.alert(
+          t('OFFLINE'),
+          t('OFFLINE_MSG'),
+        );
+        setLoading(false);
+        onClose();
+        return ;
+      }
       let userDetails = await AsyncStorage.getItem('userDetails');
       userDetails = JSON.parse(userDetails);
       console.log(userDetails);
