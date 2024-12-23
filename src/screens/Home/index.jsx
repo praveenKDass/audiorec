@@ -11,6 +11,7 @@ import {
   Linking,
   AppState,
   LayoutAnimation,
+  BackHandler,
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,13 +28,18 @@ import DNDModalComponent from '../../components/Modal/DNDModalComponent';
 import UploadAlert from '../../components/Modal/UploadModalComponent';
 import UserInformationModal from '../../components/Modal/userInformationModal';
 import MediaPlayer from '../../components/MediaPlayer/MediaPlayer';
-import { useTranslation } from 'react-i18next';
-import { Dropdown } from 'react-native-element-dropdown';
-import { useKeepAwake } from '@sayem314/react-native-keep-awake';
-import { sortRecordings } from '../../services/utils/utils';
+import {useTranslation} from 'react-i18next';
+import {Dropdown} from 'react-native-element-dropdown';
+import {useKeepAwake} from '@sayem314/react-native-keep-awake';
+import {sortRecordings} from '../../services/utils/utils';
+import notifee, {AndroidImportance} from '@notifee/react-native';
+
+notifee.registerForegroundService(() => {
+  return new Promise(() => {});
+});
 
 const HomeScreen = () => {
-  useKeepAwake()
+  useKeepAwake();
   const [uploadModal, setuploadModal] = useState(false);
   const [recordUpload, setRecordUpload] = useState();
   const [userInformationModal, setUserInformationModal] = useState(false);
@@ -51,14 +57,48 @@ const HomeScreen = () => {
   const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   const [selectedMusic, setSelectedMusic] = useState();
   const [language, setLanguage] = useState({
-    label:"English",
-    value:'en'
+    label: 'English',
+    value: 'en',
   });
-  const { t, i18n } = useTranslation();
+  const {t, i18n} = useTranslation();
   const languages = [
-    { label: 'English', value: 'en' },
-    { label: 'Hindi', value: 'hi' },
+    {label: 'English', value: 'en'},
+    {label: 'Hindi', value: 'hi'},
   ];
+  useEffect(() => {
+    const backAction = () => {
+      if (isRecording) {
+        Alert.alert(
+          'Exit Recording?',
+          'If you exit, the recording will stop. Do you want to proceed?',
+          [
+            {
+              text: 'Cancel',
+              onPress: () => null,
+              style: 'cancel',
+            },
+            {
+              text: 'Stop and Exit',
+              onPress: () => {
+                stopRecording(); // Call stopRecording function
+                BackHandler.exitApp(); // Exit the app
+              },
+            },
+          ],
+          {cancelable: true},
+        );
+        return true; // Prevent default back button behavior
+      }
+      return false; // Allow default back button behavior if not recording
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove(); // Cleanup listener
+  }, [isRecording]); // Depend on `isRecording`
 
   useEffect(() => {
     // Check and request DND permission when the app starts
@@ -100,7 +140,7 @@ const HomeScreen = () => {
         });
       } else {
         i18n.changeLanguage('en');
-        setLanguage({ label: 'English', value: 'en' });
+        setLanguage({label: 'English', value: 'en'});
       }
     };
 
@@ -127,6 +167,8 @@ const HomeScreen = () => {
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
       try {
+        await notifee.requestPermission();
+
         const recordAudioPermission = PERMISSIONS.ANDROID.RECORD_AUDIO;
         let fineLocation = PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
 
@@ -141,21 +183,17 @@ const HomeScreen = () => {
         ) {
           return true;
         } else {
-          Alert.alert(
-            t('PERMISSION_REQUIRED'),
-            t('PERMISSION_REQUIRED_MSG'),
-            [
-              {
-                text: t('OK'),
-                onPress: () => console.log('Permission denied'),
-              },
-              {
-                text: t('GO_TO_SETTINGS'),
-                onPress: () => Linking.openSettings(),
-                style: 'cancel',
-              },
-            ],
-          );
+          Alert.alert(t('PERMISSION_REQUIRED'), t('PERMISSION_REQUIRED_MSG'), [
+            {
+              text: t('OK'),
+              onPress: () => console.log('Permission denied'),
+            },
+            {
+              text: t('GO_TO_SETTINGS'),
+              onPress: () => Linking.openSettings(),
+              style: 'cancel',
+            },
+          ]);
         }
       } catch (err) {
         console.warn(err);
@@ -189,7 +227,7 @@ const HomeScreen = () => {
   useEffect(() => {
     const initializeRecordings = async () => {
       const storedRecordings = await loadRecordingsFromStorage();
-      let sortRecord = await sortRecordings(storedRecordings)
+      let sortRecord = await sortRecordings(storedRecordings);
       setRecordings(sortRecord);
     };
     initializeRecordings();
@@ -198,11 +236,11 @@ const HomeScreen = () => {
   const checkRecording = () => {
     setUserInformationModal(true);
   };
-  const changeLanguage = async (lang) => {
-    await i18n.changeLanguage(lang.value);  
-    setLanguage(lang);  
+  const changeLanguage = async lang => {
+    await i18n.changeLanguage(lang.value);
+    setLanguage(lang);
     await AsyncStorage.setItem('selectedLanguage', JSON.parse(lang));
-  }
+  };
   // Start recording
   const startRecording = async () => {
     const granted = await requestPermission();
@@ -212,6 +250,21 @@ const HomeScreen = () => {
     }
 
     try {
+      const channelId = await notifee.createChannel({
+        id: 'recording',
+        name: 'Recording',
+      });
+
+      notifee.displayNotification({
+        title: 'Android audio background recording',
+        body: 'recording...',
+        android: {
+          channelId,
+          asForegroundService: true,
+          importance: AndroidImportance.HIGH,
+        },
+      });
+
       const uniqueFileName = `recording_${Date.now()}_${uuidv4()}.mp3`;
       const recordingPath = Platform.select({
         ios: `${RNFS.DocumentDirectoryPath}/${uniqueFileName}`,
@@ -259,10 +312,11 @@ const HomeScreen = () => {
       };
       setRecordUpload(newRecording);
       const updatedRecordings = [...recordings, newRecording];
-      let sortRecord = await sortRecordings(updatedRecordings)
+      let sortRecord = await sortRecordings(updatedRecordings);
       setRecordings(sortRecord);
       await saveRecordingsToStorage(sortRecord);
       await setuploadModal(true);
+      await notifee.stopForegroundService();
     } catch (error) {
       console.error('Failed to stop recording:', error);
     }
@@ -292,15 +346,15 @@ const HomeScreen = () => {
   //     .padStart(2, '0')}`;
   // };
 
-  const formatDuration = (seconds) => {
+  const formatDuration = seconds => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-  
+
     const formattedHours = hours.toString().padStart(2, '0');
     const formattedMins = mins.toString().padStart(2, '0');
     const formattedSecs = secs.toString().padStart(2, '0');
-  
+
     return `${formattedHours}:${formattedMins}:${formattedSecs}`;
   };
 
@@ -320,17 +374,17 @@ const HomeScreen = () => {
         {/* Top section with text and button */}
         <View style={styles.topSection}>
           <Text style={styles.headerText}>{t('SHIKSHA_CHAUPAL')}</Text>
-          
+
           <Dropdown
             label={t('LANGUAGE')}
             data={languages}
             labelField="label"
             valueField="value"
             value={language.value}
-            onChange={item => changeLanguage(item)} 
+            onChange={item => changeLanguage(item)}
             style={styles.dropdown}
             placeholder={t('SELECT_LANGUAGE')}
-        />
+          />
         </View>
 
         {/* FlatList or MediaPlayer based on state */}
@@ -372,22 +426,22 @@ const HomeScreen = () => {
                     onPress={stopRecording}
                     disabled={!isRecording}
                     color="#F44336"
-                    />
-                {/* <Button
+                  />
+                  {/* <Button
                     title="Clear Recordings"
                     onPress={clearRecordings}
                     disabled={recordings.length === 0}
                   />  */}
                 </View>
-                {recordings.length >0 &&
-                <View style={styles.currentDurationContainer}>
-                <Text style={styles.listingtitle}>{t("MY_RECORD")}</Text>               
-                </View>
-                }             
+                {recordings.length > 0 && (
+                  <View style={styles.currentDurationContainer}>
+                    <Text style={styles.listingtitle}>{t('MY_RECORD')}</Text>
+                  </View>
+                )}
               </>
             }
             renderItem={({item}) =>
-               item.id ? (
+              item.id ? (
                 <Card
                   item={item}
                   setRecordings={setRecordings}
@@ -414,7 +468,7 @@ const HomeScreen = () => {
         dontShowAgain={dontShowAgain}
         setDontShowAgain={setDontShowAgain}
       />
-        <UploadAlert
+      <UploadAlert
         visible={uploadModal}
         onClose={() => setuploadModal(false)}
         recordingPath={recordUpload}
@@ -443,7 +497,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     zIndex: 10,
-    height:60
+    height: 60,
   },
   headerText: {
     fontSize: 24,
@@ -480,7 +534,7 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     marginTop: 20,
-    marginTop: 100, 
+    marginTop: 100,
   },
   header: {
     fontSize: 18,
@@ -502,10 +556,9 @@ const styles = StyleSheet.create({
     color: '#2196F3',
     fontWeight: 'bold',
   },
-  listingtitle:{
+  listingtitle: {
     fontSize: 20,
     color: '#2196F3',
     fontWeight: 'bold',
-  }
+  },
 });
-
